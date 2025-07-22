@@ -1,2 +1,6 @@
-# MagiOS
-32 bit operating system built for fun, based on the aesthetic of the 90s mecha anime Neon Genesis Evangelion
+# MAGIos
+
+![Logo](resources/logo.png)
+
+An operating system built for fun, based on 90s anime aesthetic, specifically neon genesis evangelion, hence the name.
+
