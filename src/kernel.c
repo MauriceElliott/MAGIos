@@ -211,7 +211,7 @@ void kernel_main(void) {
   terminal_writestring("- Interrupts: Disabled (GRUB default)\n\n");
 
   /* Final message */
-  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK));
+  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_RED, VGA_COLOR_BLACK));
   terminal_writestring("Hello, World from MAGIos!\n");
   terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
   terminal_writestring("System is now in infinite idle loop...\n");
