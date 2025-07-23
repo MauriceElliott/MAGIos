@@ -150,7 +150,25 @@ size_t strlen(const char *str) {
  * This is what we'll use most often for text output
  */
 void terminal_writestring(const char *data) {
-  terminal_write(data, strlen(data));
+  const char *spaces = "     ";
+  size_t data_len = strlen(data);
+  size_t total_len = 5 + data_len + 1;
+
+  char buf[total_len];
+  // Copy the spaces manually
+  for (size_t i = 0; i < 5; ++i) {
+      buf[i] = spaces[i];
+  }
+
+  // Copy the data manually
+  for (size_t i = 0; i < data_len; ++i) {
+      buf[5 + i] = data[i];
+  }
+
+  // Null-terminate the string
+  buf[5 + data_len] = '\0';
+
+  terminal_write(buf, data_len + 5);
 }
 
 /* === COLOR CHANGE HELPER FUNCTION ===
@@ -176,6 +194,7 @@ void kernel_main(void) {
 
   /* Header message in red */
   terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_RED, VGA_COLOR_BLACK));
+  terminal_writestring("======================================\n");
   terminal_writestring("MAGI SYSTEM STARTUP SEQUENCE INITIATED\n");
   terminal_writestring("======================================\n\n");
 
@@ -197,9 +216,9 @@ void kernel_main(void) {
 
   /* Main welcome message */
   terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_MAGENTA, VGA_COLOR_BLACK));
-  terminal_writestring("MAGIos v0.1.0 - Welcome to Terminal Dogma\n");
+  terminal_writestring("MAGIos v0.0.1\n");
   terminal_setcolor(vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK));
-  terminal_writestring("32-bit Operating System Successfully Initialized\n\n");
+  terminal_writestring("Boot Successful\n\n");
 
   /* Basic system information */
   terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK));
