@@ -157,6 +157,22 @@ void terminal_writestring(const char *data) {
   }
 }
 
+/* === CHARACTER CONSTANTS FOR SWIFT ===
+ * These functions provide character constants that Swift can call
+ * without needing to use integer literals (which don't work in -parse-stdlib
+ * mode)
+ */
+char get_char_O(void) { return 'O'; }
+char get_char_K(void) { return 'K'; }
+char get_char_space(void) { return ' '; }
+char get_char_newline(void) { return '\n'; }
+uint8_t get_color_green(void) {
+  return VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
+}
+uint8_t get_color_cyan(void) {
+  return VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK);
+}
+
 /* === SWIFT KERNEL INITIALIZATION ===
  * CRITICAL: Initialize and call Swift kernel components
  */
@@ -167,11 +183,7 @@ static void initialize_swift_kernel(void) {
   /* Call Swift kernel main function */
   swift_kernel_main();
 
-  /* Display Hello World from Swift message to prove Swift integration works */
-  terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK));
-  terminal_writestring("Hello World from Swift!\n");
-  terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK));
-  terminal_writestring("Swift kernel executed successfully!\n\n");
+  /* Swift kernel has now executed and displayed its own messages */
 
   __asm__ volatile("" ::: "memory"); /* Memory barrier */
 }
@@ -215,10 +227,7 @@ void kernel_main(void) {
   /* Swift kernel has completed its initialization and display */
   /* Now we handle the final system state */
 
-  /* Display C kernel status message */
-  swift_terminal_setcolor(
-      VGA_ENTRY_COLOR(VGA_COLOR_DARK_GREY, VGA_COLOR_BLACK));
-  swift_terminal_writestring("C kernel: Swift integration successful\n");
+  /* C kernel integration complete - Swift handled display */
 
   /* === INFINITE IDLE LOOP ===
    * CRITICAL: The kernel must never return from kernel_main
