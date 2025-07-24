@@ -18,7 +18,13 @@ let package = Package(
             name: "MAGIos",
             path: "src/swift",
             swiftSettings: [
-                .enableExperimentalFeature("Embedded")
+                .enableExperimentalFeature("Embedded"),
+                .unsafeFlags([
+                    "-target", "i686-unknown-none-elf",
+                    "-Xfrontend", "-disable-objc-interop",
+                    "-parse-stdlib",
+                    "-wmo"
+                ])
             ]
         )
     ]
