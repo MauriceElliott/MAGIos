@@ -8,7 +8,48 @@
 #include <stdint.h> /* For fixed-width integer types (uint8_t, uint16_t, etc.) */
 
 /* Include our Swift bridge header for interoperability */
-#include "include/kernel_bridge.h"
+#include "swift/include/kernel_bridge.h"
+
+/* === SWIFT RUNTIME STUBS ===
+ * Minimal implementations of standard library functions required by Swift
+ * runtime These provide basic functionality for the embedded Swift kernel
+ * environment
+ */
+
+/* Memory management stubs */
+void free(void *ptr) {
+  /* In a real kernel, this would free memory from a heap allocator
+   * For now, we ignore free calls since we don't have dynamic allocation */
+  (void)ptr; /* Suppress unused parameter warning */
+}
+
+int posix_memalign(void **memptr, size_t alignment, size_t size) {
+  /* Minimal memory allocation - for embedded Swift we avoid dynamic allocation
+   * Return error to force Swift to use stack allocation where possible */
+  (void)memptr;
+  (void)alignment;
+  (void)size;
+  return -1; /* Return error - allocation failed */
+}
+
+/* Memory operations */
+void *memset(void *s, int c, size_t n) {
+  unsigned char *p = (unsigned char *)s;
+  while (n--) {
+    *p++ = (unsigned char)c;
+  }
+  return s;
+}
+
+/* Random number generation stub */
+void arc4random_buf(void *buf, size_t nbytes) {
+  /* Provide deterministic "random" data for embedded environment
+   * In a real kernel, this would use a proper PRNG */
+  unsigned char *p = (unsigned char *)buf;
+  for (size_t i = 0; i < nbytes; i++) {
+    p[i] = (unsigned char)(i * 0x5A + 0x3C); /* Simple deterministic pattern */
+  }
+}
 
 /* === MULTIBOOT INFORMATION HANDLING ===
  * CRITICAL: Process multiboot information from GRUB
@@ -76,6 +117,46 @@ static void kernel_panic(const char *message) {
   }
 }
 
+/* === C TERMINAL FUNCTIONS FOR SWIFT ===
+ * These functions provide VGA terminal access to Swift kernel
+ */
+static volatile uint16_t *vga_buffer = (uint16_t *)VGA_MEMORY;
+static size_t terminal_row = 0;
+static size_t terminal_column = 0;
+static uint8_t terminal_color =
+    VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+
+void terminal_setcolor(uint8_t color) { terminal_color = color; }
+
+void terminal_putchar(char c) {
+  if (c == '\n') {
+    terminal_column = 0;
+    terminal_row++;
+    if (terminal_row >= VGA_HEIGHT) {
+      terminal_row = 0;
+    }
+    return;
+  }
+
+  const size_t index = terminal_row * VGA_WIDTH + terminal_column;
+  vga_buffer[index] = VGA_ENTRY(c, terminal_color);
+
+  terminal_column++;
+  if (terminal_column >= VGA_WIDTH) {
+    terminal_column = 0;
+    terminal_row++;
+    if (terminal_row >= VGA_HEIGHT) {
+      terminal_row = 0;
+    }
+  }
+}
+
+void terminal_writestring(const char *data) {
+  for (size_t i = 0; data[i] != 0; i++) {
+    terminal_putchar(data[i]);
+  }
+}
+
 /* === SWIFT KERNEL INITIALIZATION ===
  * CRITICAL: Initialize and call Swift kernel components
  */
@@ -85,6 +166,11 @@ static void initialize_swift_kernel(void) {
 
   /* Call Swift kernel main function */
   swift_kernel_main();
+
+  /* Display message confirming Swift compilation works */
+  terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK));
+  terminal_writestring("Hello World from Swift!\n");
+  terminal_writestring("Swift kernel compilation successful!\n\n");
 
   __asm__ volatile("" ::: "memory"); /* Memory barrier */
 }

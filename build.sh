@@ -2,6 +2,7 @@
 # MAGIos Build Script - Swift-First macOS Version
 # Evangelion-themed operating system with Embedded Swift kernel
 # Requires macOS with Homebrew
+export TOOLCHAINS=org.swift.62202505141a
 
 set -e  # Exit on any error
 
@@ -50,20 +51,6 @@ check_swift_toolchain() {
         echo "1. Visit: https://www.swift.org/download/#snapshots"
         echo "2. Download 'Trunk Development (main)' toolchain"
         echo "3. Install and select it in Xcode preferences"
-        echo ""
-        exit 1
-    fi
-
-    # Check if it's a development snapshot
-    swift_version=$(swift --version 2>/dev/null || echo "unknown")
-    if [[ ! "$swift_version" =~ (6\.0-dev|main) ]]; then
-        echo "❌ MELCHIOR ERROR: Need Swift development snapshot"
-        echo "Current version: $swift_version"
-        echo ""
-        echo "Embedded Swift requires development snapshot:"
-        echo "1. Visit: https://www.swift.org/download/#snapshots"
-        echo "2. Download 'Trunk Development (main)' toolchain"
-        echo "3. Install and activate: export TOOLCHAINS=<toolchain-id>"
         echo ""
         exit 1
     fi

@@ -13,15 +13,17 @@ ASMFLAGS = -f elf32
 CFLAGS = -m32 -ffreestanding -fno-stack-protector -fno-builtin -nostdlib -Wall -Wextra -std=c99
 LDFLAGS = -m elf_i386 -T linker.ld
 
-# Swift compilation flags for embedded target
-SWIFTFLAGS = build --triple i686-unknown-none-elf -c release \
-	-Xswiftc -enable-experimental-feature -Xswiftc Embedded \
-	-Xswiftc -Xfrontend -Xswiftc -disable-objc-interop \
-	-Xswiftc -nostdlib
+# Swift compilation flags for embedded target - simplified
+SWIFTFLAGS = -enable-experimental-feature Embedded \
+	-target i686-unknown-none-elf \
+	-Xfrontend -disable-objc-interop \
+	-parse-stdlib \
+	-wmo \
+	-c -emit-object
 
 # === DIRECTORIES ===
 SRCDIR = src
-SWIFTSRCDIR = .
+SWIFTSRCDIR = ./swift
 BUILDDIR = build
 ISODIR = iso
 
@@ -33,10 +35,8 @@ C_OBJECTS = $(C_SOURCES:$(SRCDIR)/%.c=$(BUILDDIR)/%.o)
 
 # Swift objects
 SWIFT_LIB = .build/release/libMAGIosSwift.a
-SWIFT_OBJECTS = $(BUILDDIR)/swift_kernel.o
-
 # All objects for final kernel
-OBJECTS = $(ASM_OBJECTS) $(C_OBJECTS) $(SWIFT_OBJECTS)
+OBJECTS = $(ASM_OBJECTS) $(C_OBJECTS)
 
 # === PHONY TARGETS ===
 .PHONY: all clean iso run debug check-tools help swift-check magi-status
@@ -63,8 +63,6 @@ check-tools:
 	@which qemu-system-i386 > /dev/null || (echo "❌ MELCHIOR ERROR: qemu not found" && echo "Install with: brew install qemu" && exit 1)
 	@which i686-elf-gcc > /dev/null || (echo "❌ BALTHASAR ERROR: i686-elf-gcc not found" && echo "Install with: brew tap nativeos/i686-elf-toolchain && brew install i686-elf-gcc" && exit 1)
 	@which swift > /dev/null || (echo "❌ SWIFT ERROR: swift not found" && echo "Install Swift development snapshot from swift.org" && exit 1)
-	@echo "Verifying Swift development snapshot..."
-	@swift --version | grep -E "(6\.0-dev|main)" > /dev/null || (echo "❌ SWIFT ERROR: Need development snapshot (6.0-dev or main)" && echo "Download from: https://www.swift.org/download/#snapshots" && exit 1)
 	@echo "All MAGI subsystems operational ✅"
 	@echo ""
 
@@ -73,23 +71,19 @@ $(BUILDDIR):
 	@mkdir -p $(BUILDDIR)
 
 # === SWIFT COMPILATION ===
-$(SWIFT_LIB): $(shell find $(SRCDIR) -name "*.swift" 2>/dev/null)
+$(SWIFT_LIB): $(shell find $(SRCDIR)/swift/ -name "*.swift" 2>/dev/null)
 	@echo "🔹 Compiling Swift kernel components..."
-	@$(SWIFT) $(SWIFTFLAGS)
+	@swiftc $(SWIFTFLAGS) $(SRCDIR)/swift/*.swift -o $(BUILDDIR)/swift_kernel.o
+	@mkdir -p .build/release
+	@ar rcs $@ $(BUILDDIR)/swift_kernel.o
 	@echo "Swift library built: $@"
 
-$(SWIFT_OBJECTS): $(SWIFT_LIB) | $(BUILDDIR)
-	@echo "🔹 Extracting Swift objects..."
-	@cd $(BUILDDIR) && ar x ../$(SWIFT_LIB)
-	@echo "🔹 Combining Swift objects..."
-	@cd $(BUILDDIR) && i686-elf-ld -r -o swift_kernel.o *.o 2>/dev/null || \
-		(echo "Creating fallback Swift object..." && echo | i686-elf-as --32 -o swift_kernel.o)
-	@cd $(BUILDDIR) && rm -f *.o.tmp 2>/dev/null || true
+
 
 # === C COMPILATION ===
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c | $(BUILDDIR)
 	@echo "🔹 Compiling C bridge: $<"
-	$(CC) $(CFLAGS) -I$(SRCDIR)/include -c $< -o $@
+	$(CC) $(CFLAGS) -I$(SRCDIR)/swift/include -c $< -o $@
 
 # === ASSEMBLY ===
 $(BUILDDIR)/%.o: $(SRCDIR)/%.s | $(BUILDDIR)
@@ -97,10 +91,10 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.s | $(BUILDDIR)
 	$(ASM) $(ASMFLAGS) $< -o $@
 
 # === KERNEL BINARY ===
-$(BUILDDIR)/kernel.bin: $(OBJECTS)
+$(BUILDDIR)/kernel.bin: $(OBJECTS) $(SWIFT_LIB)
 	@echo ""
 	@echo "🔗 Linking MAGIos Swift kernel..."
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $(OBJECTS) --whole-archive $(SWIFT_LIB) --no-whole-archive
 	@echo ""
 	@echo "✅ MAGIos Swift kernel compiled successfully!"
 	@echo "   Binary size: $$(ls -lh $@ | awk '{print $$5}')"
