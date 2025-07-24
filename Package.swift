@@ -1,55 +1,55 @@
 // swift-tools-version: 6.0
-// MAGIos Embedded Swift Package
-// Swift package configuration for the MAGIos kernel components
+// MAGIos Embedded Swift Kernel Package
+// Production Swift kernel for Evangelion-themed operating system
 
 import PackageDescription
 
 let package = Package(
-    name: "MAGIos-Swift",
+    name: "MAGIosSwift",
     products: [
-        // Static library that will be linked with the C kernel
+        // Static library for linking with C kernel components
         .library(
             name: "MAGIosSwift",
             type: .static,
             targets: ["MAGIosSwift"]
-        ),
-        // Demo executable for testing Swift kernel functionality
-        .executable(
-            name: "SwiftKernelDemo",
-            targets: ["SwiftKernelDemo"]
-        ),
+        )
     ],
     targets: [
         .target(
             name: "MAGIosSwift",
-            path: "Sources/MAGIosSwift",
-            exclude: ["SwiftKernelDemo.swift"],
+            path: "src",
             swiftSettings: [
                 // Enable Embedded Swift compilation mode
                 .enableExperimentalFeature("Embedded"),
 
-                // Disable features not available in embedded mode
+                // Embedded Swift compiler flags
                 .unsafeFlags([
+                    // Target bare-metal i686 architecture
+                    "-target", "i686-unknown-none-elf",
+
+                    // Disable standard library and runtime features
                     "-Xfrontend", "-disable-objc-interop",
                     "-Xfrontend", "-disable-stack-protector",
+                    "-Xfrontend", "-disable-reflection-metadata",
+                    "-Xfrontend", "-disable-reflection-names",
+
+                    // Code generation optimizations
                     "-Xfrontend", "-function-sections",
                     "-Xfrontend", "-gline-tables-only",
 
-                    // Target i686-elf to match existing kernel
-                    "-target", "i686-unknown-none-elf",
-
-                    // Optimization and size settings
+                    // Whole module optimization for size and performance
                     "-O",
                     "-whole-module-optimization",
 
-                    // Freestanding environment (no standard library runtime)
+                    // C compatibility flags for freestanding environment
                     "-Xcc", "-ffreestanding",
                     "-Xcc", "-fno-stack-protector",
                     "-Xcc", "-nostdlib",
                     "-Xcc", "-m32",
-
-                    // Alignment and ABI compatibility with C kernel
                     "-Xcc", "-mpreferred-stack-boundary=2",
+
+                    // Additional kernel-specific optimizations
+                    "-Xfrontend", "-sil-verify-all",
                 ]),
             ],
             linkerSettings: [
@@ -58,12 +58,6 @@ let package = Package(
                     "-static",
                 ])
             ]
-        ),
-        .executableTarget(
-            name: "SwiftKernelDemo",
-            dependencies: [],
-            path: "Sources/SwiftKernelDemo",
-            sources: ["main.swift"]
-        ),
+        )
     ]
 )

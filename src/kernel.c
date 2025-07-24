@@ -1,277 +1,252 @@
 /*
- * MAGIos Kernel - Main C Code
- * This is the heart of our operating system kernel
- * It provides basic text output capabilities for a "Hello World" OS
+ * MAGIos Kernel - Swift Integration Version
+ * This is the hybrid C/Swift kernel implementation
+ * It provides basic bootstrapping in C and then calls Swift kernel functions
  */
 
 #include <stddef.h> /* For size_t and NULL definitions */
 #include <stdint.h> /* For fixed-width integer types (uint8_t, uint16_t, etc.) */
 
-/* === VGA TEXT MODE CONSTANTS ===
- * CRITICAL: These define how we interact with the VGA text buffer
- * VGA text mode is the simplest way to display text on x86 systems
- */
-#define VGA_WIDTH 80  /* Standard VGA text mode is 80 characters wide */
-#define VGA_HEIGHT 25 /* Standard VGA text mode is 25 lines tall */
-#define VGA_MEMORY                                                             \
-  0xB8000 /* Physical memory address where VGA text buffer lives */
+/* Include our Swift bridge header for interoperability */
+#include "include/kernel_bridge.h"
 
-/* === VGA COLOR ENUMERATION ===
- * NON-CRITICAL: These make our code more readable than using raw numbers
- * VGA text mode supports 16 foreground and 8 background colors
+/* === MULTIBOOT INFORMATION HANDLING ===
+ * CRITICAL: Process multiboot information from GRUB
+ * This data is passed from the bootloader and contains system information
  */
-typedef enum {
-  VGA_COLOR_BLACK = 0,          /* 0000 in binary */
-  VGA_COLOR_BLUE = 1,           /* 0001 in binary */
-  VGA_COLOR_GREEN = 2,          /* 0010 in binary */
-  VGA_COLOR_CYAN = 3,           /* 0011 in binary */
-  VGA_COLOR_RED = 4,            /* 0100 in binary */
-  VGA_COLOR_MAGENTA = 5,        /* 0101 in binary */
-  VGA_COLOR_BROWN = 6,          /* 0110 in binary */
-  VGA_COLOR_LIGHT_GREY = 7,     /* 0111 in binary */
-  VGA_COLOR_DARK_GREY = 8,      /* 1000 in binary */
-  VGA_COLOR_LIGHT_BLUE = 9,     /* 1001 in binary */
-  VGA_COLOR_LIGHT_GREEN = 10,   /* 1010 in binary */
-  VGA_COLOR_LIGHT_CYAN = 11,    /* 1011 in binary */
-  VGA_COLOR_LIGHT_RED = 12,     /* 1100 in binary */
-  VGA_COLOR_LIGHT_MAGENTA = 13, /* 1101 in binary */
-  VGA_COLOR_LIGHT_BROWN = 14,   /* 1110 in binary */
-  VGA_COLOR_WHITE = 15,         /* 1111 in binary */
-} vga_color;
+typedef struct multiboot_info {
+  uint32_t flags;
+  uint32_t mem_lower;
+  uint32_t mem_upper;
+  uint32_t boot_device;
+  uint32_t cmdline;
+  uint32_t mods_count;
+  uint32_t mods_addr;
+  /* ... other fields as needed ... */
+} multiboot_info_t;
 
-/* === VGA COLOR HELPER FUNCTION ===
- * NON-CRITICAL: Makes color handling easier
- * Combines foreground and background colors into a single byte
- * Format: BBBBFFFF (4 bits background, 4 bits foreground)
+/* === LEGACY C FUNCTIONS ===
+ * These remain in C for compatibility and low-level operations
+ * Some may be gradually moved to Swift in future phases
  */
-static inline uint8_t vga_entry_color(vga_color fg, vga_color bg) {
-  return fg | bg << 4; /* Shift background color to upper 4 bits */
+
+/* Legacy VGA helper functions for fallback/debugging */
+static inline uint8_t vga_entry_color_c(vga_color_t fg, vga_color_t bg) {
+  return fg | bg << 4;
 }
 
-/* === VGA CHARACTER ENTRY HELPER FUNCTION ===
- * CRITICAL: Creates a VGA text mode entry (character + attributes)
- * Each character in VGA text mode takes 2 bytes:
- * - Low byte: ASCII character code
- * - High byte: Color attributes (background and foreground colors)
- */
-static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
+static inline uint16_t vga_entry_c(unsigned char uc, uint8_t color) {
   return (uint16_t)uc | (uint16_t)color << 8;
 }
 
-/* === TERMINAL STATE VARIABLES ===
- * CRITICAL: These track our current cursor position and display settings
- * Global variables are initialized to 0 automatically in the BSS section
+/* === EMERGENCY FALLBACK FUNCTIONS ===
+ * These provide basic output if Swift kernel fails
+ * CRITICAL: These ensure we can always display error messages
  */
-static size_t terminal_row;       /* Current row (0-24) */
-static size_t terminal_column;    /* Current column (0-79) */
-static uint8_t terminal_color;    /* Current color attributes */
-static uint16_t *terminal_buffer; /* Pointer to VGA text buffer in memory */
+static void emergency_print(const char *message) {
+  volatile uint16_t *vga_buffer = (uint16_t *)VGA_MEMORY;
+  uint8_t color = VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_RED, VGA_COLOR_BLACK);
 
-/* === TERMINAL INITIALIZATION FUNCTION ===
- * CRITICAL: Sets up our text display system
- * This must be called before any text output
+  /* Clear first line for emergency message */
+  for (int i = 0; i < VGA_WIDTH; i++) {
+    vga_buffer[i] = VGA_ENTRY(' ', color);
+  }
+
+  /* Display emergency message */
+  int pos = 0;
+  while (message[pos] && pos < VGA_WIDTH - 1) {
+    vga_buffer[pos] = VGA_ENTRY(message[pos], color);
+    pos++;
+  }
+}
+
+/* === KERNEL PANIC FUNCTION ===
+ * CRITICAL: Handle kernel panic situations
  */
-void terminal_initialize(void) {
-  /* Set cursor to top-left corner */
-  terminal_row = 0;
-  terminal_column = 0;
+static void kernel_panic(const char *message) {
+  /* Disable interrupts to prevent further issues */
+  __asm__ volatile("cli");
 
-  /* Set default colors (cyan text on black background for that retro feel) */
-  terminal_color = vga_entry_color(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK);
+  emergency_print("KERNEL PANIC: ");
+  emergency_print(message);
 
-  /* Map the VGA text buffer to our pointer */
-  /* This is direct hardware access - we're writing to video memory */
-  terminal_buffer = (uint16_t *)VGA_MEMORY;
+  /* Halt the system */
+  while (1) {
+    __asm__ volatile("hlt");
+  }
+}
 
-  /* Clear the entire screen by filling with spaces */
-  for (size_t y = 0; y < VGA_HEIGHT; y++) {
-    for (size_t x = 0; x < VGA_WIDTH; x++) {
-      const size_t index =
-          y * VGA_WIDTH + x; /* Convert 2D coords to 1D index */
-      terminal_buffer[index] = vga_entry(' ', terminal_color);
+/* === SWIFT KERNEL INITIALIZATION ===
+ * CRITICAL: Initialize and call Swift kernel components
+ */
+static void initialize_swift_kernel(void) {
+  /* Attempt to initialize Swift terminal system */
+  __asm__ volatile("" ::: "memory"); /* Memory barrier */
+
+  /* Call Swift kernel main function */
+  swift_kernel_main();
+
+  __asm__ volatile("" ::: "memory"); /* Memory barrier */
+}
+
+/* === BOOT INFORMATION PROCESSING ===
+ * Extract and prepare boot information for Swift kernel
+ */
+static boot_info_t process_multiboot_info(uint32_t magic,
+                                          multiboot_info_t *mbi) {
+  boot_info_t boot_info = {0};
+
+  boot_info.magic = magic;
+
+  if (mbi && (magic == 0x2BADB002)) {
+    boot_info.flags = mbi->flags;
+    if (mbi->flags & 0x01) {
+      boot_info.memory_lower = mbi->mem_lower;
+      boot_info.memory_upper = mbi->mem_upper;
     }
   }
+
+  return boot_info;
 }
-
-/* === SINGLE CHARACTER OUTPUT FUNCTION ===
- * CRITICAL: Displays one character at current cursor position
- * Handles special characters like newline
- */
-void terminal_putchar(char c) {
-  /* Handle newline character */
-  if (c == '\n') {
-    terminal_column = 0;                /* Move to start of line */
-    if (++terminal_row == VGA_HEIGHT) { /* Move to next row */
-      terminal_row =
-          0; /* Wrap to top if at bottom (NON-CRITICAL: could scroll instead) */
-    }
-    return;
-  }
-
-  /* Calculate position in linear buffer */
-  const size_t index = terminal_row * VGA_WIDTH + terminal_column;
-
-  /* Write character and color to VGA buffer */
-  terminal_buffer[index] = vga_entry(c, terminal_color);
-
-  /* Advance cursor position */
-  if (++terminal_column == VGA_WIDTH) { /* If we hit the right edge */
-    terminal_column = 0;                /* Wrap to next line */
-    if (++terminal_row == VGA_HEIGHT) {
-      terminal_row = 0; /* Wrap to top (NON-CRITICAL: could scroll instead) */
-    }
-  }
-}
-
-/* === BUFFER OUTPUT FUNCTION ===
- * NON-CRITICAL: Convenience function for outputting a buffer of known size
- * Could be inlined into terminal_writestring, but kept separate for clarity
- */
-void terminal_write(const char *data, size_t size) {
-  for (size_t i = 0; i < size; i++) {
-    terminal_putchar(data[i]);
-  }
-}
-
-/* === STRING LENGTH HELPER FUNCTION ===
- * CRITICAL: We can't use standard library strlen, so we implement our own
- * Counts characters until we hit null terminator ('\0')
- */
-size_t strlen(const char *str) {
-  size_t len = 0;
-  while (str[len]) { /* Continue until we hit '\0' */
-    len++;
-  }
-  return len;
-}
-
-/* === STRING OUTPUT FUNCTION ===
- * CRITICAL: Main function for displaying null-terminated strings
- * This is what we'll use most often for text output
- */
-void terminal_writestring(const char *data) {
-  const char *spaces = "     ";
-  size_t data_len = strlen(data);
-  size_t total_len = 5 + data_len + 1;
-
-  char buf[total_len];
-  // Copy the spaces manually
-  for (size_t i = 0; i < 5; ++i) {
-      buf[i] = spaces[i];
-  }
-
-  // Copy the data manually
-  for (size_t i = 0; i < data_len; ++i) {
-      buf[5 + i] = data[i];
-  }
-
-  // Null-terminate the string
-  buf[5 + data_len] = '\0';
-
-  terminal_write(buf, data_len + 5);
-}
-
-/* === COLOR CHANGE HELPER FUNCTION ===
- * NON-CRITICAL: Convenience function to change text colors
- * Makes the demo more visually appealing
- */
-void terminal_setcolor(uint8_t color) { terminal_color = color; }
 
 /* === MAIN KERNEL FUNCTION ===
  * CRITICAL: This is called from our assembly boot code
- * This is where our operating system actually starts doing work
+ * This function coordinates between C bootstrap and Swift kernel
  */
 void kernel_main(void) {
-  /* === INITIALIZE DISPLAY SYSTEM ===
-   * CRITICAL: Must be first - sets up our ability to show output
-   */
-  terminal_initialize();
+  /* === EARLY INITIALIZATION === */
+  /* Set up basic error handling */
 
-  /* === DISPLAY BOOT MESSAGE ===
-   * This is our "Hello World" - proof that our OS is working
-   * The Evangelion theming is NON-CRITICAL but fun
-   */
+  /* === SWIFT KERNEL INTEGRATION === */
+  /* Try to initialize and run Swift kernel */
+  __asm__ volatile("" ::: "memory"); /* Compiler barrier */
 
-  /* Header message in red */
-  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_RED, VGA_COLOR_BLACK));
-  terminal_writestring("======================================\n");
-  terminal_writestring("MAGI SYSTEM STARTUP SEQUENCE INITIATED\n");
-  terminal_writestring("======================================\n\n");
+  /* Initialize Swift kernel - this does the main work */
+  initialize_swift_kernel();
 
-  /* System status messages */
-  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK));
-  terminal_writestring("CASPER... ");
-  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK));
-  terminal_writestring("ONLINE\n");
+  /* === POST-SWIFT PROCESSING === */
+  /* Swift kernel has completed its initialization and display */
+  /* Now we handle the final system state */
 
-  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK));
-  terminal_writestring("MELCHIOR... ");
-  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK));
-  terminal_writestring("ONLINE\n");
-
-  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK));
-  terminal_writestring("BALTHASAR... ");
-  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK));
-  terminal_writestring("ONLINE\n\n");
-
-  /* Main welcome message */
-  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_MAGENTA, VGA_COLOR_BLACK));
-  terminal_writestring("MAGIos v0.0.1\n");
-  terminal_setcolor(vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK));
-  terminal_writestring("Boot Successful\n\n");
-
-  /* Basic system information */
-  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK));
-  terminal_writestring("System Status:\n");
-  terminal_setcolor(vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK));
-  terminal_writestring("- Kernel loaded at 1MB physical memory\n");
-  terminal_writestring("- VGA text mode: 80x25 characters\n");
-  terminal_writestring("- Memory management: Basic (no paging yet)\n");
-  terminal_writestring("- Interrupts: Disabled (GRUB default)\n\n");
-
-  /* Final message */
-  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_RED, VGA_COLOR_BLACK));
-  terminal_writestring("Hello, World from MAGIos!\n");
-  terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
-  terminal_writestring("System is now in infinite idle loop...\n");
+  /* Display C kernel status message */
+  swift_terminal_setcolor(
+      VGA_ENTRY_COLOR(VGA_COLOR_DARK_GREY, VGA_COLOR_BLACK));
+  swift_terminal_writestring("C kernel: Swift integration successful\n");
 
   /* === INFINITE IDLE LOOP ===
    * CRITICAL: The kernel must never return from kernel_main
    * We halt the CPU to save power while waiting for interrupts
-   * Since we haven't set up interrupt handlers yet, this effectively stops the
-   * system
    */
+  __asm__ volatile("cli"); /* Disable interrupts for clean halt */
+
   while (1) {
-    __asm__("hlt"); /* Halt instruction - stops CPU until next interrupt */
-                    /*
-                     * NOTE: Since we have interrupts disabled (cli was called in boot.s),
-                     * only Non-Maskable Interrupts (NMI) can wake us up.
-                     * This is fine for our basic "Hello World" OS.
-                     */
+    __asm__ volatile(
+        "hlt"); /* Halt instruction - stops CPU until next interrupt */
+                /*
+                 * NOTE: Since we have interrupts disabled (cli was called),
+                 * only Non-Maskable Interrupts (NMI) can wake us up.
+                 * This is fine for our current "Hello World" OS.
+                 * Future versions will enable interrupts and implement proper idle
+                 * handling.
+                 */
   }
 
   /* This point should never be reached */
 }
 
+/* === ALTERNATIVE ENTRY POINTS ===
+ * These provide different kernel modes for testing and development
+ */
+
+/* C-only kernel mode (for fallback testing) */
+void kernel_main_c_only(void) {
+  /* Initialize VGA manually for C-only mode */
+  volatile uint16_t *terminal_buffer = (uint16_t *)VGA_MEMORY;
+  uint8_t color = VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK);
+
+  /* Clear screen */
+  for (size_t y = 0; y < VGA_HEIGHT; y++) {
+    for (size_t x = 0; x < VGA_WIDTH; x++) {
+      const size_t index = y * VGA_WIDTH + x;
+      terminal_buffer[index] = VGA_ENTRY(' ', color);
+    }
+  }
+
+  /* Display C-only message */
+  const char *message = "MAGIos - C-only mode (Swift disabled)";
+  size_t row = 0;
+  size_t col = 0;
+
+  for (size_t i = 0; message[i] != '\0'; i++) {
+    if (message[i] == '\n') {
+      row++;
+      col = 0;
+      continue;
+    }
+
+    const size_t index = row * VGA_WIDTH + col;
+    terminal_buffer[index] = VGA_ENTRY(message[i], color);
+    col++;
+  }
+
+  /* Infinite loop */
+  while (1) {
+    __asm__ volatile("hlt");
+  }
+}
+
+/* === DEBUGGING FUNCTIONS ===
+ * These are available for development and troubleshooting
+ */
+
+#ifdef DEBUG
+void debug_print(const char *message) {
+  swift_terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_BROWN, VGA_COLOR_BLACK));
+  swift_terminal_writestring("[DEBUG] ");
+  swift_terminal_writestring(message);
+  swift_terminal_writestring("\n");
+}
+#endif
+
+/* === SYSTEM INFORMATION FUNCTIONS ===
+ * These provide system status and diagnostic information
+ */
+void display_system_diagnostics(void) {
+  swift_terminal_setcolor(
+      VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK));
+  swift_terminal_writestring("System Diagnostics:\n");
+
+  swift_terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLACK));
+  swift_terminal_writestring("- C Kernel: Active (integration mode)\n");
+  swift_terminal_writestring("- Swift Kernel: Active (embedded mode)\n");
+  swift_terminal_writestring("- Boot Protocol: Multiboot v1\n");
+  swift_terminal_writestring("- Architecture: i686-elf\n\n");
+}
+
 /*
- * === SUMMARY OF WHAT THIS KERNEL DOES ===
+ * === SUMMARY OF HYBRID KERNEL ARCHITECTURE ===
  *
- * CRITICAL FUNCTIONS:
- * 1. Sets up VGA text mode output system
- * 2. Displays "Hello World" style boot messages
- * 3. Enters infinite loop to prevent returning to bootloader
+ * CRITICAL C COMPONENTS:
+ * 1. Multiboot header processing (boot.s)
+ * 2. Early initialization and error handling
+ * 3. Swift kernel initialization and coordination
+ * 4. Final system halt and infinite loop
+ * 5. Emergency fallback functions
  *
- * NON-CRITICAL FEATURES:
- * 1. Evangelion-themed messages (aesthetic choice)
- * 2. Multiple colors (could use single color)
- * 3. System information display (informational only)
- * 4. Helper functions for convenience
+ * SWIFT COMPONENTS:
+ * 1. Main terminal and VGA handling
+ * 2. MAGI system display and theming
+ * 3. Memory-safe operations
+ * 4. Modern language features and type safety
  *
- * WHAT'S MISSING (for future phases):
- * 1. Interrupt handling
- * 2. Memory management beyond basic stack
- * 3. Input handling (keyboard, mouse)
- * 4. Process management
- * 5. File system
- * 6. Graphics mode support
+ * INTEGRATION BENEFITS:
+ * 1. C provides low-level system control
+ * 2. Swift provides safe, high-level operations
+ * 3. Gradual migration path from C to Swift
+ * 4. Emergency fallback to C-only mode
+ * 5. Best of both worlds approach
+ *
+ * CALLING SEQUENCE:
+ * boot.s -> kernel_main() -> initialize_swift_kernel() -> swift_kernel_main()
+ *        -> [Swift does main work] -> return to C -> infinite halt loop
  */

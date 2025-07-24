@@ -1,64 +1,180 @@
-# MAGIos
+# MAGIos Swift Edition
 
 ![Logo](resources/MAGIos.png)
 
-An operating system built for fun, based on 90s anime aesthetic, specifically neon genesis evangelion, hence the name.
+**A Swift-powered operating system kernel with Evangelion aesthetic**
+
+MAGIos is an experimental operating system built entirely with **Embedded Swift**, bringing modern language features to kernel development while maintaining the iconic 90s anime tech aesthetic of Neon Genesis Evangelion.
 
 ![Screenshot](resources/firstLook.png)
 
-## Embedded Swift Integration Plan
+## Features
 
-### Phase 1: Research and Toolchain Setup
+- **🤖 Swift-First Kernel**: Built with Embedded Swift for memory safety and modern syntax
+- **🎌 MAGI System Interface**: Authentic Evangelion-themed boot sequence
+- **⚡ Direct Hardware Access**: VGA text mode control with Swift safety
+- **🔧 Hybrid Architecture**: Minimal C bootstrap with Swift kernel logic
+- **📱 macOS Development**: Optimized for macOS development environment
 
-1.  **Embedded Swift Toolchain:**
-    *   **Research:** The most critical step is to find and set up a Swift compiler that can target your `i686-elf` platform. You'll need to investigate the state of the official Swift compiler's support for freestanding, bare-metal targets. Search for terms like "embedded swift," "swift bare metal," "swift freertos," and "swift osdev."
-    *   **Action:** Download and install the appropriate Swift compiler. You may need to build it from source with specific flags. The goal is to have a `swiftc` that can produce object files compatible with your existing `i686-elf-ld` linker.
+## Quickstart
 
-2.  **Calling Conventions and C-to-Swift Interface:**
-    *   **Research:** Understand the calling conventions for both `i686-elf-gcc` and your chosen Swift compiler. This is crucial for making C and Swift code call each other. You need to know how function arguments are passed (registers vs. stack) and how return values are handled.
-    *   **C-to-Swift:** To call Swift from C, you must make the Swift function visible to the C linker. This is achieved by using the `@_cdecl` attribute in your Swift code. For example, a Swift function declared as `@_cdecl("my_swift_function") func mySwiftFunction()` will be available in C as `void my_swift_function(void);`. You will then need to declare the function signature in a C header file to be included in your C source.
-    *   **Action:** Document the calling conventions for both. This will be your guide for writing the C-to-Swift and Swift-to-C interface code.
+### 🚀 Get Running in 5 Minutes
 
-3.  **Name Mangling:**
-    *   **Research:** Compilers change the names of functions in the final object file (a process called name mangling). You need to understand how your C compiler and Swift compiler mangle names.
-    *   **Action:** Use tools like `nm` on compiled object files to inspect the symbol names. You'll likely need to use `extern "C"` in your Swift code to prevent name mangling and make functions callable from C.
+**Prerequisites:**
 
-### Phase 2: "Hello, Swift!" - A Minimal Integration
+- **macOS** (Intel or Apple Silicon)
+- **Swift Development Snapshot** (6.0-dev or main branch)
+  - ⚠️ **Critical**: Release versions don't support Embedded Swift
+  - Download: https://www.swift.org/download/#snapshots
 
-1.  **Create a Swift "Kernel":**
-    *   **Action:** Write a simple Swift file (e.g., `kernel.swift`) that contains a single function, let's say `swift_main()`. This function should be marked with `@_cdecl("swift_main")` to expose it to C. Inside this function, you won't be able to do much yet, as you won't have access to your C kernel's VGA functions. For now, it can just be an empty function.
+### ⚡ Option 1: Automatic Setup (Recommended)
 
-2.  **Update the Makefile:**
-    *   **Action:** Modify your `Makefile` to compile the Swift code. You'll need to add a new rule for `.swift` files that uses your embedded `swiftc` to create an object file (e.g., `build/kernel_swift.o`). Add this new object file to your `OBJECTS` list.
+```bash
+# Clone and auto-build
+git clone <your-repo-url>
+cd MAGIos
 
-3.  **Modify the C Kernel:**
-    *   **Action:** In `kernel.c`, declare the `swift_main` function as `extern void swift_main(void);`. Then, call `swift_main()` from your `kernel_main` function.
+# Install everything and run
+./build.sh --run
+```
 
-4.  **Link and Run:**
-    *   **Action:** Build and run your OS. If everything is set up correctly, it should compile, link, and run without errors. You won't see any new output, but the fact that it runs proves that you've successfully integrated Swift into your build process.
+**That's it!** The script will:
 
-### Phase 3: Interoperability - Calling C from Swift
+1. Install missing dependencies via Homebrew
+2. Verify Swift development snapshot
+3. Build the Swift kernel
+4. Create bootable ISO
+5. Launch in QEMU
 
-1.  **Create a Bridging Header:**
-    *   **Research:** Swift uses bridging headers to import C code. You'll need to figure out how to use one in your embedded environment.
-    *   **Action:** Create a header file (e.g., `kernel.h`) that declares the C functions you want to call from Swift (like `terminal_writestring` and `terminal_setcolor`).
+### 🔧 Option 2: Manual Build
 
-2.  **Expose C Functions to Swift:**
-    *   **Action:** In your Swift code, import the bridging header. You should now be able to call the C functions you declared.
+```bash
+# Install Swift development snapshot first from swift.org
 
-3.  **Write to the Screen from Swift:**
-    *   **Action:** In your `swift_main` function, call `terminal_writestring` to print a message to the screen. This will be the first time you see output generated from Swift code.
+# Install dependencies
+brew install nasm qemu
+brew tap nativeos/i686-elf-toolchain
+brew install i686-elf-gcc
 
-### Phase 4: Advanced Topics
+# Build and run
+make all
+make iso
+make run
+```
 
-1.  **Swift Standard Library:**
-    *   **Research:** The full Swift standard library is likely too large and has too many dependencies (like a file system and networking) to run in your OS. You'll need to investigate how to compile and link a minimal version of the standard library or a "core" subset.
-    *   **Action:** Experiment with different compiler flags to control the standard library's inclusion.
+### ✅ Success Indicators
 
-2.  **Memory Management:**
-    *   **Research:** Swift uses Automatic Reference Counting (ARC) for memory management. You'll need to understand how ARC works and what runtime support it requires. You may need to implement parts of the Swift runtime yourself.
-    *   **Action:** Write the necessary runtime support functions for ARC.
+When everything works, you'll see:
 
-3.  **Interrupts and Hardware Interaction:**
-    *   **Research:** To write drivers and handle interrupts in Swift, you'll need to understand how to work with pointers, memory-mapped I/O, and inline assembly in Swift.
-    *   **Action:** Create Swift wrappers for your hardware interaction functions.
+```
+========================================
+MAGI SYSTEM STARTUP SEQUENCE INITIATED
+========================================
+
+     CASPER...      ONLINE
+     MELCHIOR...    ONLINE
+     BALTHASAR...   ONLINE
+
+     MAGIos v0.0.1 - Swift Edition
+     Boot Successful (Swift Kernel Active)
+
+     Hello, World from Swift MAGIos!
+     AT Field operational. Pattern Blue.
+```
+
+### 🚨 Common Issues
+
+**"embedded Swift is not supported"**
+
+- Install Swift **development snapshot**, not release version
+- Visit: https://swift.org/download/#snapshots
+
+**"i686-elf-gcc: command not found"**
+
+```bash
+brew tap nativeos/i686-elf-toolchain
+brew install i686-elf-gcc
+```
+
+**Swift build fails**
+
+```bash
+swift build --triple i686-unknown-none-elf -c release
+```
+
+## Architecture
+
+```
+┌─────────────────────────────────┐
+│        MAGIos Kernel            │
+├─────────────────────────────────┤
+│  Swift Kernel (Main Logic)     │
+│  - VGA terminal management      │
+│  - MAGI system interface        │
+│  - Memory-safe operations       │
+├─────────────────────────────────┤
+│  C Bootstrap (Minimal)          │
+│  - Multiboot compliance         │
+│  - Hardware initialization      │
+├─────────────────────────────────┤
+│  Assembly Boot (System Start)   │
+│  - Protected mode setup         │
+│  - Stack configuration          │
+└─────────────────────────────────┘
+```
+
+## What You'll See
+
+When booted, MAGIos displays the iconic MAGI system startup:
+
+```
+======================================
+MAGI SYSTEM STARTUP SEQUENCE INITIATED
+======================================
+
+     CASPER...      ONLINE
+     MELCHIOR...    ONLINE
+     BALTHASAR...   ONLINE
+
+     MAGIos v0.0.1 - Swift Edition
+     Boot Successful (Swift Kernel Active)
+
+     Hello, World from Swift MAGIos!
+     AT Field operational. Pattern Blue.
+```
+
+## Development
+
+### Project Structure
+
+```
+MAGIos/
+├── src/
+│   ├── boot.s              # Assembly boot code
+│   ├── kernel.c            # C bootstrap layer
+│   ├── Kernel.swift        # Main Swift kernel
+│   └── include/
+│       └── kernel_bridge.h # C/Swift interop
+├── Package.swift          # Embedded Swift config
+├── build.sh               # macOS build script
+├── Makefile              # Build system
+└── linker.ld             # Linker script
+```
+
+### Build Commands
+
+```bash
+make all          # Build kernel
+make iso          # Create bootable ISO
+make run          # Build and run in QEMU
+make debug        # Run with GDB debugging
+make clean        # Clean build artifacts
+make help         # Show all commands
+```
+
+### Adding Swift Features
+
+1. **Edit Swift Code**: Modify `src/Kernel.swift`
+2. **Export to C**: Use `@_cdecl("function_name")` attribute
+3. **Declare in Header**: Add declaration to `src/include/kernel_bridge.h`
+4. **Build and Test**: `make all && make run`
