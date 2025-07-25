@@ -32,13 +32,14 @@ func c_get_color_cyan() -> Int8
 
 // MARK: - Swift Display Functions
 func swift_display_ok() {
-    let word: [Int8] = [79, 75, 32, 10]
+    // Set color to green using C helper
     c_terminal_setcolor(c_get_color_green())
 
-    // Display "OK " using C character helpers
-    for char in word {
-        c_terminal_putchar(char)
-    }
+    c_terminal_putchar(c_get_char_K())
+    c_terminal_putchar(c_get_char_O())
+    c_terminal_putchar(c_get_char_K())
+    c_terminal_putchar(c_get_char_space())
+    c_terminal_putchar(c_get_char_newline())
 }
 
 // MARK: - Required Entry Points
