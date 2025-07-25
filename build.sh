@@ -1,177 +1,204 @@
 #!/bin/bash
-# MAGIos Build Script - macOS Version
-# Automated build system for MAGIos operating system on macOS
+# MAGIos Build Script - Swift-First macOS Version
+# Evangelion-themed operating system with Embedded Swift kernel
+# Requires macOS with Homebrew
+export TOOLCHAINS=org.swift.62202505141a
 
 set -e  # Exit on any error
 
+echo ""
 echo "========================================="
-echo "MAGIos Build System for macOS"
+echo "MAGI SYSTEM STARTUP SEQUENCE INITIATED"
+echo "Terminal Dogma Build System - macOS"
 echo "========================================="
+echo ""
 
 # === PLATFORM CHECK ===
-# CRITICAL: Ensure we're running on macOS
 if [[ "$OSTYPE" != "darwin"* ]]; then
-    echo "ERROR: This script is designed for macOS only."
-    echo "For other systems, use the Makefile directly with appropriate tools."
+    echo "❌ ERROR: This script requires macOS"
+    echo "MAGIos Swift kernel is optimized for macOS development"
     exit 1
 fi
+
+# === MAGI SUBSYSTEM STATUS ===
+echo "Checking MAGI subsystems..."
+echo ""
 
 # === DEPENDENCY CHECKER FUNCTIONS ===
 check_homebrew() {
     if ! command -v brew &> /dev/null; then
-        echo "❌ Homebrew not found!"
-        echo "Installing Homebrew (required for dependencies)..."
+        echo "❌ CASPER ERROR: Homebrew not found"
+        echo "Installing Homebrew..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
         # Add Homebrew to PATH for current session
         if [[ -f "/opt/homebrew/bin/brew" ]]; then
-            # Apple Silicon Mac
             eval "$(/opt/homebrew/bin/brew shellenv)"
         elif [[ -f "/usr/local/bin/brew" ]]; then
-            # Intel Mac
             eval "$(/usr/local/bin/brew shellenv)"
         fi
+        echo "✅ CASPER: Homebrew installed"
     else
-        echo "✅ Homebrew found"
+        echo "✅ CASPER: Homebrew operational"
     fi
 }
 
-check_and_install_tool() {
-    local tool_name=$1
-    local brew_package=$2
-    local check_command=${3:-$tool_name}
-
-    if ! command -v "$check_command" &> /dev/null; then
-        echo "❌ $tool_name not found, installing..."
-        brew install "$brew_package"
-        echo "✅ $tool_name installed"
-    else
-        echo "✅ $tool_name found"
+check_swift_toolchain() {
+    if ! command -v swift &> /dev/null; then
+        echo "❌ MELCHIOR ERROR: Swift not found"
+        echo ""
+        echo "Please install Swift development snapshot:"
+        echo "1. Visit: https://www.swift.org/download/#snapshots"
+        echo "2. Download 'Trunk Development (main)' toolchain"
+        echo "3. Install and select it in Xcode preferences"
+        echo ""
+        exit 1
     fi
+
+    echo "✅ MELCHIOR: Swift development toolchain operational"
+    echo "   Version: $swift_version"
 }
 
 install_cross_compiler() {
     if ! command -v i686-elf-gcc &> /dev/null; then
-        echo "❌ Cross-compiler not found, installing..."
+        echo "❌ BALTHASAR ERROR: Cross-compiler not found"
+        echo "Installing i686-elf toolchain..."
 
-        # Try the homebrew tap first
-        echo "Attempting to install via homebrew tap..."
+        # Try the official tap first
         if brew tap nativeos/i686-elf-toolchain 2>/dev/null && \
            brew install i686-elf-binutils i686-elf-gcc 2>/dev/null; then
-            echo "✅ Cross-compiler installed via homebrew tap"
+            echo "✅ BALTHASAR: Cross-compiler installed"
         else
-            echo "⚠️  Homebrew tap failed, trying alternative method..."
-
-            # Try installing x86_64-elf-gcc as fallback
-            if brew install x86_64-elf-gcc 2>/dev/null; then
-                echo "✅ Installed x86_64-elf-gcc as alternative"
-                echo "Note: Will use x86_64-elf-gcc with -m32 flag"
-
-                # Create symbolic links for compatibility
-                local brew_prefix=$(brew --prefix)
-                if [[ ! -f "$brew_prefix/bin/i686-elf-gcc" ]]; then
-                    ln -sf "$brew_prefix/bin/x86_64-elf-gcc" "$brew_prefix/bin/i686-elf-gcc" 2>/dev/null || true
-                    ln -sf "$brew_prefix/bin/x86_64-elf-ld" "$brew_prefix/bin/i686-elf-ld" 2>/dev/null || true
-                fi
-            else
-                echo "❌ Failed to install cross-compiler automatically"
-                echo "Please install manually or check the README for instructions"
-                echo "You can try: brew install gcc"
-                exit 1
-            fi
+            echo "⚠️ Official tap failed, trying alternative..."
+            # Fallback to building from source or alternative method
+            brew install gcc
+            echo "⚠️ BALTHASAR: Using system GCC with cross-compile flags"
+            echo "   You may need to build i686-elf-gcc manually"
         fi
     else
-        echo "✅ Cross-compiler found"
+        echo "✅ BALTHASAR: Cross-compiler operational"
     fi
 }
 
+install_build_tools() {
+    local tools=("nasm" "qemu" "grub")
+
+    for tool in "${tools[@]}"; do
+        if ! command -v "$tool" &> /dev/null; then
+            echo "Installing $tool..."
+            brew install "$tool" || echo "⚠️ Failed to install $tool"
+        fi
+    done
+
+    echo "✅ Build tools operational"
+}
+
 # === DEPENDENCY INSTALLATION ===
-echo "Checking and installing dependencies..."
-echo "-------------------------------------"
-
-# Check Homebrew first
+echo "CASPER... CHECKING HOMEBREW"
 check_homebrew
+echo ""
 
-# Install basic tools
-check_and_install_tool "NASM (Assembler)" "nasm"
-check_and_install_tool "QEMU (Emulator)" "qemu"
-check_and_install_tool "xorriso (ISO creation)" "xorriso"
+echo "MELCHIOR... VERIFYING SWIFT TOOLCHAIN"
+check_swift_toolchain
+echo ""
 
-# Install cross-compiler (most complex part)
+echo "BALTHASAR... INSTALLING CROSS-COMPILER"
 install_cross_compiler
-
-echo ""
-echo "✅ All dependencies installed successfully!"
 echo ""
 
-# === CREATE REQUIRED DIRECTORIES ===
-echo "Setting up build environment..."
-mkdir -p build src iso
+echo "Installing additional build tools..."
+install_build_tools
+echo ""
+
+echo "========================================="
+echo "All MAGI subsystems operational ✅"
+echo "========================================="
+echo ""
 
 # === BUILD PROCESS ===
-echo "========================================="
-echo "Building MAGIos Kernel..."
-echo "========================================="
+echo "🔨 Building MAGIos Swift kernel..."
+echo ""
 
 # Clean previous builds
-echo "🧹 Cleaning previous builds..."
-make clean 2>/dev/null || true
+if [ -d "build" ]; then
+    echo "🧹 Cleaning previous builds..."
+    make clean 2>/dev/null || true
+fi
 
-# Build kernel binary
-echo "🔨 Compiling kernel..."
+# Build the Swift kernel
+echo "🔹 Compiling Swift kernel components..."
 if make all; then
-    echo "✅ Kernel compilation successful!"
+    echo ""
+    echo "✅ MAGIos Swift kernel compilation successful!"
+    echo ""
 else
+    echo ""
     echo "❌ Kernel compilation failed!"
     echo ""
     echo "Common issues:"
-    echo "- Cross-compiler not properly installed"
-    echo "- Source files missing or corrupted"
-    echo "- Linker script errors"
+    echo "- Swift development snapshot not properly installed"
+    echo "- Cross-compiler missing (try: brew install i686-elf-gcc)"
+    echo "- Swift source syntax errors"
     echo ""
-    echo "Try running: make check-tools"
+    echo "Debug commands:"
+    echo "  make check-tools    # Verify all tools"
+    echo "  make swift-check    # Check Swift syntax"
+    echo ""
     exit 1
 fi
 
 # Create bootable ISO
-echo "📀 Creating bootable ISO..."
+echo "📀 Creating Terminal Dogma ISO..."
 if make iso; then
-    echo "✅ ISO creation successful!"
     echo ""
     echo "========================================="
-    echo "🎉 MAGIos Build Complete!"
+    echo "🎉 Terminal Dogma Operational!"
     echo "========================================="
     echo ""
-    echo "Your operating system is ready!"
-    echo "ISO file: magios.iso"
+    echo "MAGIos Swift Edition ready for deployment"
+    echo "ISO: magios.iso ($(ls -lh magios.iso 2>/dev/null | awk '{print $5}' || echo 'unknown size'))"
     echo ""
-    echo "To run MAGIos:"
-    echo "  make run          # Run in QEMU emulator"
-    echo "  make debug        # Run with debugging support"
+    echo "Launch commands:"
+    echo "  make run      # Boot in QEMU"
+    echo "  make debug    # Debug with GDB"
+    echo "  make test     # Quick test run"
     echo ""
-    echo "To test in other environments:"
-    echo "  - Boot from magios.iso in VirtualBox/VMware"
-    echo "  - Write to USB and boot on real hardware (advanced)"
+    echo "AT Field operational. Pattern Blue. 🤖"
     echo ""
-    echo "Welcome to Terminal Dogma! 🤖"
 else
+    echo ""
     echo "❌ ISO creation failed!"
     echo ""
-    echo "The kernel binary was built successfully, but ISO creation failed."
-    echo "This might be due to missing grub-mkrescue or xorriso."
+    echo "The kernel compiled successfully but ISO creation failed."
+    echo "This may be due to missing GRUB tools."
     echo ""
-    echo "You can still test the kernel binary directly:"
+    echo "Install GRUB: brew install grub"
+    echo ""
+    echo "You can still test the kernel directly:"
     echo "  qemu-system-i386 -kernel build/kernel.bin"
+    echo ""
     exit 1
 fi
 
-# === FINAL SYSTEM CHECK (NON-CRITICAL) ===
-echo ""
+# === SYSTEM INFORMATION ===
 echo "System Information:"
 echo "-------------------"
 echo "macOS Version: $(sw_vers -productVersion)"
 echo "Architecture: $(uname -m)"
-echo "Kernel Binary: build/kernel.bin ($(ls -lh build/kernel.bin 2>/dev/null | awk '{print $5}' || echo 'unknown size'))"
-echo "ISO Image: magios.iso ($(ls -lh magios.iso 2>/dev/null | awk '{print $5}' || echo 'unknown size'))"
+echo "Swift Version: $(swift --version | head -1)"
+echo "Kernel Binary: build/kernel.bin ($(ls -lh build/kernel.bin 2>/dev/null | awk '{print $5}' || echo 'not found'))"
 echo ""
-echo "Happy hacking! 🚀"
+
+# === OPTIONAL AUTO-RUN ===
+if [[ "$1" == "--run" ]] || [[ "$1" == "-r" ]]; then
+    echo "🚀 Auto-launching MAGIos..."
+    echo ""
+    make run
+fi
+
+echo "Terminal Dogma build complete. Ready for synchronization. 🎌"
+echo ""
+echo "Usage:"
+echo "  ./build.sh           # Build only"
+echo "  ./build.sh --run     # Build and run"
+echo "  make help            # Show all commands"
