@@ -17,7 +17,7 @@ LDFLAGS = -m elf_i386 -T linker.ld
 SWIFTFLAGS = -enable-experimental-feature Embedded \
 	-target i686-unknown-none-elf \
 	-Xfrontend -disable-objc-interop \
-	-parse-stdlib \
+	-Xclang-linker -nostdlib \
 	-wmo \
 	-c -emit-object
 

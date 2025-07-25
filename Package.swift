@@ -22,9 +22,9 @@ let package = Package(
                 .unsafeFlags([
                     "-target", "i686-unknown-none-elf",
                     "-Xfrontend", "-disable-objc-interop",
-                    "-parse-stdlib",
-                    "-wmo"
-                ])
+                    "-Xclang-linker", "-nostdlib",
+                    "-wmo",
+                ]),
             ]
         )
     ]
