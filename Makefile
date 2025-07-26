@@ -17,7 +17,9 @@ LDFLAGS = -m elf_i386 -T linker.ld
 SWIFTFLAGS = -enable-experimental-feature Embedded \
 	-target i686-unknown-none-elf \
 	-Xfrontend -disable-objc-interop \
-	-Xclang-linker -nostdlib \
+	-Xfrontend -function-sections \
+	-parse-stdlib \
+	-module-name SwiftKernel \
 	-wmo \
 	-c -emit-object
 
@@ -73,8 +75,17 @@ $(BUILDDIR):
 # === SWIFT COMPILATION ===
 $(SWIFT_LIB): $(shell find $(SRCDIR)/swift/ -name "*.swift" 2>/dev/null)
 	@echo "🔹 Compiling Swift kernel components..."
-	@swiftc $(SWIFTFLAGS) $(SRCDIR)/swift/*.swift -o $(BUILDDIR)/swift_kernel.o
 	@mkdir -p .build/release
+	@swiftc $(SWIFTFLAGS) $(SRCDIR)/swift/*.swift -o $(BUILDDIR)/swift_kernel.o 2>/dev/null || \
+		(echo "⚠️ Swift compilation failed, trying alternate flags..." && \
+		swiftc -enable-experimental-feature Embedded \
+		-target i686-unknown-none-elf \
+		-Xfrontend -disable-objc-interop \
+		-parse-stdlib \
+		-module-name SwiftKernel \
+		-wmo \
+		-c -emit-object \
+		$(SRCDIR)/swift/*.swift -o $(BUILDDIR)/swift_kernel.o)
 	@ar rcs $@ $(BUILDDIR)/swift_kernel.o
 	@echo "Swift library built: $@"
 

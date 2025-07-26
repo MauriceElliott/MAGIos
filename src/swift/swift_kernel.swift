@@ -1,66 +1,108 @@
-// MAGIos Swift Kernel - Absolute Minimal Implementation
-// Just proves Swift can compile and link with C
+// MAGIos Swift Kernel - Message Display Implementation
+// Uses C wrapper functions to display "hello, from swift!"
 
-// MARK: - External C Functions
-@_silgen_name("terminal_putchar")
-func c_terminal_putchar(_ char: Int8)
+// External C wrapper functions we can call (no parameters needed)
+@_silgen_name("swift_putchar_h")
+func c_putchar_h()
 
-@_silgen_name("terminal_setcolor")
-func c_terminal_setcolor(_ color: Int8)
+@_silgen_name("swift_putchar_e")
+func c_putchar_e()
 
-@_silgen_name("terminal_writestring")
-func c_terminal_writestring(_ str: UnsafeMutablePointer<Int8>)
+@_silgen_name("swift_putchar_l")
+func c_putchar_l()
 
-// C character helper functions
-@_silgen_name("get_char_O")
-func c_get_char_O() -> Int8
+@_silgen_name("swift_putchar_o")
+func c_putchar_o()
 
-@_silgen_name("get_char_K")
-func c_get_char_K() -> Int8
+@_silgen_name("swift_putchar_comma")
+func c_putchar_comma()
 
-@_silgen_name("get_char_space")
-func c_get_char_space() -> Int8
+@_silgen_name("swift_putchar_space")
+func c_putchar_space()
 
-@_silgen_name("get_char_newline")
-func c_get_char_newline() -> Int8
+@_silgen_name("swift_putchar_f")
+func c_putchar_f()
 
-@_silgen_name("get_color_green")
-func c_get_color_green() -> Int8
+@_silgen_name("swift_putchar_r")
+func c_putchar_r()
 
-@_silgen_name("get_color_cyan")
-func c_get_color_cyan() -> Int8
+@_silgen_name("swift_putchar_m")
+func c_putchar_m()
 
-// MARK: - Swift Display Functions
-func swift_display_ok() {
-    // Set color to green using C helper
-    c_terminal_setcolor(c_get_color_green())
+@_silgen_name("swift_putchar_s")
+func c_putchar_s()
 
-    c_terminal_putchar(c_get_char_K())
-    c_terminal_putchar(c_get_char_O())
-    c_terminal_putchar(c_get_char_K())
-    c_terminal_putchar(c_get_char_space())
-    c_terminal_putchar(c_get_char_newline())
+@_silgen_name("swift_putchar_w")
+func c_putchar_w()
+
+@_silgen_name("swift_putchar_i")
+func c_putchar_i()
+
+@_silgen_name("swift_putchar_t")
+func c_putchar_t()
+
+@_silgen_name("swift_putchar_exclamation")
+func c_putchar_exclamation()
+
+@_silgen_name("swift_putchar_newline")
+func c_putchar_newline()
+
+@_silgen_name("swift_set_color_yellow")
+func c_set_color_yellow()
+
+// Swift message display function
+func swift_display_hello() {
+    // Set color to yellow
+    c_set_color_yellow()
+
+    // Display "hello, from swift!"
+    c_putchar_h()
+    c_putchar_e()
+    c_putchar_l()
+    c_putchar_l()
+    c_putchar_o()
+    c_putchar_comma()
+    c_putchar_space()
+    c_putchar_f()
+    c_putchar_r()
+    c_putchar_o()
+    c_putchar_m()
+    c_putchar_space()
+    c_putchar_s()
+    c_putchar_w()
+    c_putchar_i()
+    c_putchar_f()
+    c_putchar_t()
+    c_putchar_exclamation()
+    c_putchar_newline()
 }
 
-// MARK: - Required Entry Points
+// Entry point function - called from C
 @_cdecl("swift_kernel_main")
-public func swiftKernelMain() {
-    // Now Swift can display text using C helpers!
-    swift_display_ok()
+func swiftKernelMain() {
+    // Display our Swift message!
+    swift_display_hello()
 }
 
+// Test function that returns nothing
+@_cdecl("swift_hello")
+func swiftHello() {
+    swift_display_hello()
+}
+
+// Simple function for testing
+@_cdecl("swift_test")
+func swiftTest() {
+    // Minimal test function
+}
+
+// Required functions that C code expects
 @_cdecl("swift_terminal_setcolor")
-public func swiftTerminalSetcolor(_ color: Int8) {
-    // Forward to C (but don't actually call it to avoid parameter issues)
+func swiftTerminalSetcolor() {
+    // Minimal implementation - does nothing
 }
 
 @_cdecl("swift_terminal_writestring")
-public func swiftTerminalWritestring(_ data: UnsafeMutablePointer<Int8>) {
-    // Forward to C implementation
-    c_terminal_writestring(data)
-}
-
-@_cdecl("swift_hello")
-public func swiftHello() {
-    swift_display_ok()
+func swiftTerminalWritestring() {
+    // Minimal implementation - does nothing
 }

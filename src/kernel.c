@@ -126,7 +126,45 @@ static size_t terminal_column = 0;
 static uint8_t terminal_color =
     VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 
+/* Forward declarations */
+void terminal_putchar(char c);
+
 void terminal_setcolor(uint8_t color) { terminal_color = color; }
+
+/* Stack protection stubs for Swift runtime */
+void *__stack_chk_guard = (void *)0xdeadbeef;
+
+void __stack_chk_fail(void) {
+  /* Stack overflow detected - halt the system */
+  emergency_print("STACK OVERFLOW DETECTED");
+  while (1) {
+    __asm__ volatile("hlt");
+  }
+}
+
+/* Standard C library functions required by Swift */
+int putchar(int c) {
+  terminal_putchar((char)c);
+  return c;
+}
+
+void *memmove(void *dest, const void *src, size_t n) {
+  unsigned char *d = (unsigned char *)dest;
+  const unsigned char *s = (const unsigned char *)src;
+
+  if (d < s) {
+    /* Copy forward */
+    for (size_t i = 0; i < n; i++) {
+      d[i] = s[i];
+    }
+  } else if (d > s) {
+    /* Copy backward */
+    for (size_t i = n; i > 0; i--) {
+      d[i - 1] = s[i - 1];
+    }
+  }
+  return dest;
+}
 
 void terminal_putchar(char c) {
   if (c == '\n') {
@@ -166,11 +204,51 @@ char get_char_O(void) { return 'O'; }
 char get_char_K(void) { return 'K'; }
 char get_char_space(void) { return ' '; }
 char get_char_newline(void) { return '\n'; }
+char get_char_h(void) { return 'h'; }
+char get_char_e(void) { return 'e'; }
+char get_char_l(void) { return 'l'; }
+char get_char_o(void) { return 'o'; }
+char get_char_comma(void) { return ','; }
+char get_char_f(void) { return 'f'; }
+char get_char_r(void) { return 'r'; }
+char get_char_m(void) { return 'm'; }
+char get_char_s(void) { return 's'; }
+char get_char_w(void) { return 'w'; }
+char get_char_i(void) { return 'i'; }
+char get_char_t(void) { return 't'; }
+char get_char_exclamation(void) { return '!'; }
 uint8_t get_color_green(void) {
   return VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
 }
 uint8_t get_color_cyan(void) {
   return VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK);
+}
+uint8_t get_color_yellow(void) {
+  return VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK);
+}
+
+/* === SWIFT WRAPPER FUNCTIONS ===
+ * These functions wrap terminal operations for Swift to call without parameters
+ */
+
+void swift_putchar_h(void) { terminal_putchar('h'); }
+void swift_putchar_e(void) { terminal_putchar('e'); }
+void swift_putchar_l(void) { terminal_putchar('l'); }
+void swift_putchar_o(void) { terminal_putchar('o'); }
+void swift_putchar_comma(void) { terminal_putchar(','); }
+void swift_putchar_space(void) { terminal_putchar(' '); }
+void swift_putchar_f(void) { terminal_putchar('f'); }
+void swift_putchar_r(void) { terminal_putchar('r'); }
+void swift_putchar_m(void) { terminal_putchar('m'); }
+void swift_putchar_s(void) { terminal_putchar('s'); }
+void swift_putchar_w(void) { terminal_putchar('w'); }
+void swift_putchar_i(void) { terminal_putchar('i'); }
+void swift_putchar_t(void) { terminal_putchar('t'); }
+void swift_putchar_exclamation(void) { terminal_putchar('!'); }
+void swift_putchar_newline(void) { terminal_putchar('\n'); }
+
+void swift_set_color_yellow(void) {
+  terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK));
 }
 
 /* === SWIFT KERNEL INITIALIZATION ===
