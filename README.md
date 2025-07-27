@@ -2,69 +2,45 @@
 
 ![Logo](resources/MAGIos.png)
 
-**A Swift-powered operating system kernel with Evangelion aesthetic**
+**An experimental 32-bit operating system written in Swift, inspired by Neon Genesis Evangelion**
 
-MAGIos is an experimental operating system built entirely with **Embedded Swift**, bringing modern language features to kernel development while maintaining the iconic 90s anime tech aesthetic of Neon Genesis Evangelion.
+MAGIos is an art piece that explores what happens when you build an operating system kernel primarily in Swift, with the aesthetic and terminology of the MAGI supercomputer system from the 1990s anime _Neon Genesis Evangelion_. This is not practical software - it's an artistic and technical exploration.
 
 ![Screenshot](resources/firstLook.png)
 
-## Features
+## What This Is
 
-- **🤖 Swift-First Kernel**: Built with Embedded Swift for memory safety and modern syntax
-- **🎌 MAGI System Interface**: Authentic Evangelion-themed boot sequence
-- **⚡ Direct Hardware Access**: VGA text mode control with Swift safety
-- **🔧 Hybrid Architecture**: Minimal C bootstrap with Swift kernel logic
-- **📱 macOS Development**: Optimized for macOS development environment
+- **🎨 Art Project**: An exploration of Swift in kernel development with Evangelion theming
+- **🚀 Swift Kernel**: 32-bit OS kernel written primarily in Embedded Swift
+- **🤖 MAGI Interface**: Boot sequence and terminology inspired by Evangelion's supercomputers
+- **⚡ Educational**: Demonstrates memory-safe kernel programming concepts
+- **📱 macOS-Optimized**: Development environment designed for macOS users
 
-## Quickstart
+## Quick Start
 
-### 🚀 Get Running in 5 Minutes
-
-**Prerequisites:**
+### Requirements
 
 - **macOS** (Intel or Apple Silicon)
-- **Swift Development Snapshot** (6.0-dev or main branch)
-  - ⚠️ **Critical**: Release versions don't support Embedded Swift
-  - Download: https://www.swift.org/download/#snapshots
+- **Swift Development Snapshot** (6.0+ development branch)
+  - ⚠️ **Important**: Release Swift versions do NOT support Embedded Swift
+  - Download from: https://www.swift.org/download/#snapshots
 
-### ⚡ Option 1: Automatic Setup (Recommended)
+### Simple Build & Run
 
 ```bash
-# Clone and auto-build
-git clone <your-repo-url>
+git clone <repository-url>
 cd MAGIos
-
-# Install everything and run
 ./build.sh --run
 ```
 
-**That's it!** The script will:
+The build script will automatically:
 
-1. Install missing dependencies via Homebrew
-2. Verify Swift development snapshot
-3. Build the Swift kernel
-4. Create bootable ISO
-5. Launch in QEMU
+- Install missing dependencies via Homebrew
+- Verify your Swift toolchain supports Embedded Swift
+- Build the Swift kernel and create a bootable ISO
+- Launch MAGIos in QEMU
 
-### 🔧 Option 2: Manual Build
-
-```bash
-# Install Swift development snapshot first from swift.org
-
-# Install dependencies
-brew install nasm qemu
-brew tap nativeos/i686-elf-toolchain
-brew install i686-elf-gcc
-
-# Build and run
-make all
-make iso
-make run
-```
-
-### ✅ Success Indicators
-
-When everything works, you'll see:
+### Expected Output
 
 ```
 ========================================
@@ -76,72 +52,33 @@ MAGI SYSTEM STARTUP SEQUENCE INITIATED
      BALTHASAR...   ONLINE
 
      MAGIos v0.0.1 - Swift Edition
-     Boot Successful (Swift Kernel Active)
-
-     Hello, World from Swift MAGIos!
      AT Field operational. Pattern Blue.
 ```
 
-### 🚨 Common Issues
+### Troubleshooting
 
-**"embedded Swift is not supported"**
+| Issue                             | Solution                                                                 |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| "embedded Swift is not supported" | Install Swift development snapshot, not release                          |
+| "i686-elf-gcc: command not found" | Run: `brew tap nativeos/i686-elf-toolchain && brew install i686-elf-gcc` |
+| Build fails                       | Check that Xcode has the development toolchain selected                  |
 
-- Install Swift **development snapshot**, not release version
-- Visit: https://swift.org/download/#snapshots
+## Technical Overview
 
-**"i686-elf-gcc: command not found"**
+MAGIos uses a layered architecture that allows Swift to run at the kernel level:
 
-```bash
-brew tap nativeos/i686-elf-toolchain
-brew install i686-elf-gcc
-```
+| Layer             | Language | Purpose                                    |
+| ----------------- | -------- | ------------------------------------------ |
+| **Swift Kernel**  | Swift    | Main OS logic, VGA control, MAGI interface |
+| **C Bootstrap**   | C        | Multiboot compliance, hardware setup       |
+| **Boot Assembly** | x86 ASM  | Protected mode, stack initialization       |
 
-**Swift build fails**
+### Why This Matters
 
-```bash
-swift build --triple i686-unknown-none-elf -c release
-```
-
-## Architecture
-
-```
-┌─────────────────────────────────┐
-│        MAGIos Kernel            │
-├─────────────────────────────────┤
-│  Swift Kernel (Main Logic)     │
-│  - VGA terminal management      │
-│  - MAGI system interface        │
-│  - Memory-safe operations       │
-├─────────────────────────────────┤
-│  C Bootstrap (Minimal)          │
-│  - Multiboot compliance         │
-│  - Hardware initialization      │
-├─────────────────────────────────┤
-│  Assembly Boot (System Start)   │
-│  - Protected mode setup         │
-│  - Stack configuration          │
-└─────────────────────────────────┘
-```
-
-## What You'll See
-
-When booted, MAGIos displays the iconic MAGI system startup:
-
-```
-======================================
-MAGI SYSTEM STARTUP SEQUENCE INITIATED
-======================================
-
-     CASPER...      ONLINE
-     MELCHIOR...    ONLINE
-     BALTHASAR...   ONLINE
-
-     MAGIos v0.0.1 - Swift Edition
-     Boot Successful (Swift Kernel Active)
-
-     Hello, World from Swift MAGIos!
-     AT Field operational. Pattern Blue.
-```
+- **Memory Safety**: Swift's ownership model prevents common kernel bugs
+- **Modern Syntax**: Clean, readable code in a traditionally low-level domain
+- **Artistic Expression**: Demonstrates that systems programming can be beautiful
+- **Educational Value**: Shows how high-level languages can work at the hardware level
 
 ## Development
 
@@ -150,31 +87,33 @@ MAGI SYSTEM STARTUP SEQUENCE INITIATED
 ```
 MAGIos/
 ├── src/
-│   ├── boot.s              # Assembly boot code
-│   ├── kernel.c            # C bootstrap layer
-│   ├── Kernel.swift        # Main Swift kernel
-│   └── include/
-│       └── kernel_bridge.h # C/Swift interop
-├── Package.swift          # Embedded Swift config
-├── build.sh               # macOS build script
-├── Makefile              # Build system
-└── linker.ld             # Linker script
+│   ├── boot.s                    # x86 assembly bootloader
+│   ├── kernel.c                  # C bootstrap & hardware init
+│   └── swift/
+│       └── swift_kernel.swift    # Main Swift kernel logic
+├── build.sh                      # Automated build script
+├── Makefile                      # Build system
+├── LLM_RULES.md                  # Guidelines for AI assistance
+└── linker.ld                     # Memory layout specification
 ```
 
-### Build Commands
+### Development Commands
 
-```bash
-make all          # Build kernel
-make iso          # Create bootable ISO
-make run          # Build and run in QEMU
-make debug        # Run with GDB debugging
-make clean        # Clean build artifacts
-make help         # Show all commands
-```
+| Command            | Purpose                     |
+| ------------------ | --------------------------- |
+| `./build.sh`       | Build kernel and ISO        |
+| `./build.sh --run` | Build and launch in QEMU    |
+| `make clean`       | Remove build artifacts      |
+| `make debug`       | Launch with GDB debugging   |
+| `make help`        | Show all available commands |
 
-### Adding Swift Features
+### Contributing
 
-1. **Edit Swift Code**: Modify `src/Kernel.swift`
-2. **Export to C**: Use `@_cdecl("function_name")` attribute
-3. **Declare in Header**: Add declaration to `src/include/kernel_bridge.h`
-4. **Build and Test**: `make all && make run`
+1. **Follow the Aesthetic**: Maintain Evangelion theming
+2. **Swift First**: Use Swift for new features when possible
+3. **Check LLM_RULES.md**: Guidelines for AI-assisted development
+4. **Test in QEMU**: Verify changes boot and run correctly
+
+### Adding Features
+
+Most new functionality should be added to `src/swift/swift_kernel.swift`. Use the `@_cdecl` attribute to export Swift functions that can be called from C code.

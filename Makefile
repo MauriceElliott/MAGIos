@@ -1,71 +1,97 @@
 # MAGIos Makefile - Swift-First Operating System
+# Simplified build system using centralized configuration
 # Evangelion-themed OS kernel built with Embedded Swift
-# macOS/Linux only - requires Swift development snapshot
 
 # === TOOLCHAIN CONFIGURATION ===
+export TOOLCHAINS=org.swift.62202505141a
 ASM = nasm
 CC = i686-elf-gcc
 LD = i686-elf-ld
-SWIFT = swift
+SWIFT = swiftc
+
+# === TARGET ARCHITECTURE ===
+TARGET_ARCH = i686-unknown-none-elf
+TARGET_BITS = 32
 
 # === COMPILATION FLAGS ===
 ASMFLAGS = -f elf32
 CFLAGS = -m32 -ffreestanding -fno-stack-protector -fno-builtin -nostdlib -Wall -Wextra -std=c99
 LDFLAGS = -m elf_i386 -T linker.ld
-
-# Swift compilation flags for embedded target - simplified
-SWIFTFLAGS = -enable-experimental-feature Embedded \
-	-target i686-unknown-none-elf \
-	-Xfrontend -disable-objc-interop \
-	-Xfrontend -function-sections \
-	-parse-stdlib \
-	-module-name SwiftKernel \
-	-wmo \
-	-c -emit-object
+SWIFTFLAGS = -enable-experimental-feature Embedded -target $(TARGET_ARCH) -Xfrontend -disable-objc-interop -Xfrontend -function-sections -parse-stdlib -module-name SwiftKernel -wmo -c -emit-object
 
 # === DIRECTORIES ===
 SRCDIR = src
-SWIFTSRCDIR = ./swift
+SWIFT_SRCDIR = src/swift
 BUILDDIR = build
 ISODIR = iso
 
+# === QEMU CONFIGURATION ===
+QEMU_SYSTEM = qemu-system-i386
+QEMU_FLAGS = -cdrom $(ISO_FILE)
+QEMU_DEBUG_FLAGS = -s -S
+
+# === BUILD TARGETS ===
+KERNEL_BINARY = $(BUILDDIR)/kernel.bin
+ISO_FILE = magios.iso
+
+# === MAGI SYSTEM NAMES ===
+MAGI_CASPER = CASPER
+MAGI_MELCHIOR = MELCHIOR
+MAGI_BALTHASAR = BALTHASAR
+
+# === VERSION INFO ===
+MAGIOS_VERSION = 0.0.1
+MAGIOS_CODENAME = Terminal Dogma
+
+# === BUILD OUTPUT STYLING ===
+SILENT_CHECKS = true
+SHOW_PROGRESS = true
+USE_MAGI_THEMING = true
+
 # === SOURCE FILES ===
 ASM_SOURCES = $(wildcard $(SRCDIR)/*.s)
-C_SOURCES = $(SRCDIR)/kernel.c
+C_SOURCES = $(wildcard $(SRCDIR)/*.c)
+SWIFT_SOURCES = $(wildcard $(SWIFT_SRCDIR)/*.swift)
+
 ASM_OBJECTS = $(ASM_SOURCES:$(SRCDIR)/%.s=$(BUILDDIR)/%.o)
 C_OBJECTS = $(C_SOURCES:$(SRCDIR)/%.c=$(BUILDDIR)/%.o)
+SWIFT_OBJECT = $(BUILDDIR)/swift_kernel.o
 
-# Swift objects
-SWIFT_LIB = .build/release/libMAGIosSwift.a
-# All objects for final kernel
-OBJECTS = $(ASM_OBJECTS) $(C_OBJECTS)
+ALL_OBJECTS = $(ASM_OBJECTS) $(C_OBJECTS) $(SWIFT_OBJECT)
 
 # === PHONY TARGETS ===
-.PHONY: all clean iso run debug check-tools help swift-check magi-status
+.PHONY: all clean iso run debug check-tools help swift-check magi-status test
 
 # === DEFAULT TARGET ===
-all: magi-status check-tools $(BUILDDIR)/kernel.bin
+all: magi-status $(KERNEL_BINARY)
 
 # === MAGI SYSTEM STATUS ===
 magi-status:
+ifeq ($(USE_MAGI_THEMING),true)
+	@echo "$(MAGI_CASPER)... Initializing"
+	@echo "$(MAGI_MELCHIOR)... Standby"
+	@echo "$(MAGI_BALTHASAR)... Ready"
 	@echo ""
-	@echo "========================================="
-	@echo "MAGI SYSTEM STARTUP SEQUENCE INITIATED"
-	@echo "========================================="
-	@echo ""
-	@echo "CASPER... CHECKING SWIFT TOOLCHAIN"
-	@echo "MELCHIOR... VERIFYING CROSS-COMPILER"
-	@echo "BALTHASAR... INITIALIZING BUILD SYSTEM"
-	@echo ""
+endif
 
 # === TOOL VERIFICATION ===
 check-tools:
-	@echo "Checking MAGI subsystems..."
-	@which nasm > /dev/null || (echo "❌ CASPER ERROR: nasm not found" && echo "Install with: brew install nasm" && exit 1)
-	@which qemu-system-i386 > /dev/null || (echo "❌ MELCHIOR ERROR: qemu not found" && echo "Install with: brew install qemu" && exit 1)
-	@which i686-elf-gcc > /dev/null || (echo "❌ BALTHASAR ERROR: i686-elf-gcc not found" && echo "Install with: brew tap nativeos/i686-elf-toolchain && brew install i686-elf-gcc" && exit 1)
-	@which swift > /dev/null || (echo "❌ SWIFT ERROR: swift not found" && echo "Install Swift development snapshot from swift.org" && exit 1)
-	@echo "All MAGI subsystems operational ✅"
+	@echo "Verifying MAGI subsystems..."
+	@for tool in nasm qemu-system-i386 i686-elf-gcc swiftc; do \
+		command -v $$tool >/dev/null 2>&1 || { \
+			echo "❌ $$tool not found"; \
+			echo "Run ./build.sh to install dependencies"; \
+			exit 1; \
+		}; \
+	done
+ifeq ($(SILENT_CHECKS),true)
+	@echo "✅ All tools operational"
+else
+	@echo "✅ $(MAGI_CASPER): nasm operational"
+	@echo "✅ $(MAGI_MELCHIOR): Swift operational"
+	@echo "✅ $(MAGI_BALTHASAR): Cross-compiler operational"
+	@echo "✅ QEMU operational"
+endif
 	@echo ""
 
 # === BUILD DIRECTORY ===
@@ -73,160 +99,145 @@ $(BUILDDIR):
 	@mkdir -p $(BUILDDIR)
 
 # === SWIFT COMPILATION ===
-$(SWIFT_LIB): $(shell find $(SRCDIR)/swift/ -name "*.swift" 2>/dev/null)
+$(SWIFT_OBJECT): $(SWIFT_SOURCES) | $(BUILDDIR)
+ifeq ($(SHOW_PROGRESS),true)
 	@echo "🔹 Compiling Swift kernel components..."
-	@mkdir -p .build/release
-	@swiftc $(SWIFTFLAGS) $(SRCDIR)/swift/*.swift -o $(BUILDDIR)/swift_kernel.o 2>/dev/null || \
-		(echo "⚠️ Swift compilation failed, trying alternate flags..." && \
-		swiftc -enable-experimental-feature Embedded \
-		-target i686-unknown-none-elf \
-		-Xfrontend -disable-objc-interop \
-		-parse-stdlib \
-		-module-name SwiftKernel \
-		-wmo \
-		-c -emit-object \
-		$(SRCDIR)/swift/*.swift -o $(BUILDDIR)/swift_kernel.o)
-	@ar rcs $@ $(BUILDDIR)/swift_kernel.o
-	@echo "Swift library built: $@"
-
-
+endif
+	@swiftc $(SWIFTFLAGS) $(SWIFT_SOURCES) -o $@
 
 # === C COMPILATION ===
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c | $(BUILDDIR)
+ifeq ($(SHOW_PROGRESS),true)
 	@echo "🔹 Compiling C bridge: $<"
-	$(CC) $(CFLAGS) -I$(SRCDIR)/swift/include -c $< -o $@
+endif
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 # === ASSEMBLY ===
 $(BUILDDIR)/%.o: $(SRCDIR)/%.s | $(BUILDDIR)
+ifeq ($(SHOW_PROGRESS),true)
 	@echo "🔹 Assembling boot code: $<"
-	$(ASM) $(ASMFLAGS) $< -o $@
+endif
+	@$(ASM) $(ASMFLAGS) $< -o $@
 
 # === KERNEL BINARY ===
-$(BUILDDIR)/kernel.bin: $(OBJECTS) $(SWIFT_LIB)
+$(KERNEL_BINARY): $(ALL_OBJECTS)
+ifeq ($(SHOW_PROGRESS),true)
 	@echo ""
 	@echo "🔗 Linking MAGIos Swift kernel..."
-	$(LD) $(LDFLAGS) -o $@ $(OBJECTS) --whole-archive $(SWIFT_LIB) --no-whole-archive
-	@echo ""
-	@echo "✅ MAGIos Swift kernel compiled successfully!"
+endif
+	@$(LD) $(LDFLAGS) -o $@ $(ALL_OBJECTS)
+ifeq ($(SHOW_PROGRESS),true)
 	@echo "   Binary size: $$(ls -lh $@ | awk '{print $$5}')"
-	@echo ""
+endif
 
 # === SWIFT SYNTAX CHECK ===
 swift-check:
 	@echo "🔍 Checking Swift syntax..."
-	@swift build --triple i686-unknown-none-elf -c release > /dev/null
+	@swiftc -typecheck $(SWIFT_SOURCES) \
+		-enable-experimental-feature Embedded \
+		-target $(TARGET_ARCH) \
+		-parse-stdlib
 	@echo "✅ Swift syntax check passed"
 
 # === ISO CREATION ===
-iso: $(BUILDDIR)/kernel.bin
+iso: $(KERNEL_BINARY)
+ifeq ($(SHOW_PROGRESS),true)
 	@echo "📀 Creating Terminal Dogma ISO..."
+endif
 	@mkdir -p $(ISODIR)/boot/grub
-	cp $(BUILDDIR)/kernel.bin $(ISODIR)/boot/
-	cp grub.cfg $(ISODIR)/boot/grub/
-	@if command -v grub-mkrescue >/dev/null 2>&1; then \
-		grub-mkrescue -o magios.iso $(ISODIR) 2>/dev/null; \
-	elif command -v i686-elf-grub-mkrescue >/dev/null 2>&1; then \
-		i686-elf-grub-mkrescue -o magios.iso $(ISODIR) 2>/dev/null; \
+	@cp $(KERNEL_BINARY) $(ISODIR)/boot/
+	@cp grub.cfg $(ISODIR)/boot/grub/
+	@if command -v i686-elf-grub-mkrescue >/dev/null 2>&1; then \
+		i686-elf-grub-mkrescue -o $(ISO_FILE) $(ISODIR) 2>/dev/null; \
+	elif command -v grub-mkrescue >/dev/null 2>&1; then \
+		grub-mkrescue -o $(ISO_FILE) $(ISODIR) 2>/dev/null; \
 	else \
-		echo "⚠️ grub-mkrescue not found, trying xorriso..."; \
-		xorriso -as mkisofs -R -b boot/grub/i386-pc/eltorito.img \
-			-no-emul-boot -boot-load-size 4 -boot-info-table \
-			-o magios.iso $(ISODIR) 2>/dev/null || \
-		(echo "❌ ISO creation failed. Install grub with: brew install grub" && exit 1); \
+		echo "❌ grub-mkrescue not found. Install with: brew install i686-elf-grub"; \
+		exit 1; \
 	fi
-	@echo "✅ ISO created: magios.iso ($$(ls -lh magios.iso | awk '{print $$5}'))"
-	@echo ""
-	@echo "🎌 Terminal Dogma is ready for deployment"
+ifeq ($(SHOW_PROGRESS),true)
+	@echo "✅ ISO created: $(ISO_FILE) ($$(ls -lh $(ISO_FILE) | awk '{print $$5}'))"
+endif
 
 # === RUN IN QEMU ===
 run: iso
+ifeq ($(USE_MAGI_THEMING),true)
 	@echo "🚀 Launching MAGIos in QEMU..."
 	@echo "   AT Field operational. Pattern Blue."
 	@echo ""
-	qemu-system-i386 -cdrom magios.iso
+endif
+	@$(QEMU_SYSTEM) $(QEMU_FLAGS)
 
 # === DEBUG MODE ===
 debug: iso
 	@echo "🐛 Launching MAGIos in debug mode..."
 	@echo "   Connect GDB to localhost:1234"
 	@echo ""
-	qemu-system-i386 -cdrom magios.iso -s -S
+	@$(QEMU_SYSTEM) $(QEMU_FLAGS) $(QEMU_DEBUG_FLAGS)
 
 # === TESTING ===
 test: iso
 	@echo "🧪 Testing MAGIos kernel..."
-	timeout 10s qemu-system-i386 -cdrom magios.iso -nographic -serial stdio || true
+	@timeout 10s $(QEMU_SYSTEM) $(QEMU_FLAGS) -nographic -serial stdio || true
 
 # === DEVELOPMENT HELPERS ===
-show-symbols: $(BUILDDIR)/kernel.bin
+show-symbols: $(KERNEL_BINARY)
 	@echo "📋 Kernel symbols:"
-	@i686-elf-nm $(BUILDDIR)/kernel.bin | grep -E "(swift_|main|start)" | head -15
+	@i686-elf-nm $(KERNEL_BINARY) | grep -E "(swift_|main|start)" | head -15
 
-show-sections: $(BUILDDIR)/kernel.bin
-	@echo "📋 Kernel sections:"
-	@i686-elf-objdump -h $(BUILDDIR)/kernel.bin
-
-size: $(BUILDDIR)/kernel.bin
+size: $(KERNEL_BINARY)
 	@echo "📊 Kernel size information:"
-	@i686-elf-size $(BUILDDIR)/kernel.bin
+	@i686-elf-size $(KERNEL_BINARY)
 	@echo ""
 	@echo "File sizes:"
-	@ls -lh $(BUILDDIR)/kernel.bin
-	@if [ -f "magios.iso" ]; then ls -lh magios.iso; fi
-
-disassemble: $(BUILDDIR)/kernel.bin
-	@echo "🔍 Swift kernel disassembly (first 30 lines):"
-	@i686-elf-objdump -d $(BUILDDIR)/kernel.bin | grep -A 30 "swift_kernel_main"
+	@ls -lh $(KERNEL_BINARY)
+	@if [ -f "$(ISO_FILE)" ]; then ls -lh $(ISO_FILE); fi
 
 # === CLEANUP ===
 clean:
+ifeq ($(SHOW_PROGRESS),true)
 	@echo "🧹 Cleaning Terminal Dogma..."
-	rm -rf $(BUILDDIR) $(ISODIR) magios.iso
-	@if [ -d ".build" ]; then \
-		echo "🧹 Cleaning Swift build cache..."; \
-		swift package clean; \
-	fi
+endif
+	@rm -rf $(BUILDDIR) $(ISODIR) $(ISO_FILE)
+ifeq ($(SHOW_PROGRESS),true)
 	@echo "✅ Clean completed"
+endif
 
 # === HELP ===
 help:
 	@echo ""
 	@echo "========================================="
-	@echo "MAGIos Swift Kernel Build System"
-	@echo "Evangelion-themed OS with Embedded Swift"
+	@echo "MAGIos $(MAGIOS_VERSION) - $(MAGIOS_CODENAME)"
+	@echo "Swift-First Operating System"
 	@echo "========================================="
 	@echo ""
-	@echo "Main Targets:"
+	@echo "Build Commands:"
 	@echo "  all          - Build Swift kernel (default)"
-	@echo "  iso          - Create bootable ISO image"
-	@echo "  run          - Build and run in QEMU"
-	@echo "  debug        - Build and run with GDB support"
+	@echo "  iso          - Create bootable ISO"
+	@echo "  run          - Build and launch in QEMU"
+	@echo "  debug        - Launch with GDB debugging"
 	@echo "  test         - Quick kernel test"
 	@echo ""
 	@echo "Development:"
 	@echo "  swift-check  - Verify Swift syntax"
 	@echo "  show-symbols - Display kernel symbols"
-	@echo "  show-sections- Show binary sections"
-	@echo "  disassemble  - Show Swift code disassembly"
-	@echo "  size         - Display size information"
+	@echo "  size         - Show binary size info"
 	@echo ""
 	@echo "Maintenance:"
-	@echo "  clean        - Remove all build artifacts"
-	@echo "  check-tools  - Verify toolchain installation"
+	@echo "  clean        - Remove build artifacts"
+	@echo "  check-tools  - Verify toolchain"
 	@echo ""
-	@echo "Prerequisites:"
-	@echo "  - Swift development snapshot (6.0-dev)"
-	@echo "  - Cross-compiler: brew install i686-elf-gcc"
-	@echo "  - QEMU: brew install qemu"
-	@echo "  - NASM: brew install nasm"
+	@echo "Quick Start:"
+	@echo "  ./build.sh --run    # Build and run"
 	@echo ""
+	@echo "Variables (from build.config):"
+	@echo "  Target: $(TARGET_ARCH)"
+	@echo "  Swift: $(SWIFTFLAGS)"
+	@echo "  C: $(CFLAGS)"
+	@echo ""
+ifeq ($(USE_MAGI_THEMING),true)
 	@echo "Terminal Dogma awaits your command... 🤖"
-
-# === DEPENDENCY TRACKING ===
--include $(C_OBJECTS:.o=.d)
-
-$(BUILDDIR)/%.d: $(SRCDIR)/%.c | $(BUILDDIR)
-	@$(CC) $(CFLAGS) -MM -MT $(@:.d=.o) $< > $@
+endif
 
 # === ERROR HANDLING ===
 .DELETE_ON_ERROR:
@@ -234,4 +245,4 @@ $(BUILDDIR)/%.d: $(SRCDIR)/%.c | $(BUILDDIR)
 # Force rebuild
 rebuild: clean all
 
-.PHONY: rebuild magi-status swift-check show-symbols show-sections size disassemble
+.PHONY: rebuild show-symbols size
