@@ -10,18 +10,17 @@ MAGIos is an art piece that explores what happens when you build an operating sy
 
 ## What This Is
 
-- **🎨 Art Project**: An exploration of Swift in kernel development with Evangelion theming
-- **🚀 Swift Kernel**: 32-bit OS kernel written primarily in Embedded Swift
-- **🤖 MAGI Interface**: Boot sequence and terminology inspired by Evangelion's supercomputers
-- **⚡ Educational**: Demonstrates memory-safe kernel programming concepts
-- **📱 macOS-Optimized**: Development environment designed for macOS users
+- This is an educational piece, and a bit of an art project for me to learn how to build all sorts of software. 
+- I'm writing this using C and Swift, C because its a necessity, and Swift because I just love its ergonmics, I think they're a good fit for each other. That being said the features I'm using to make this possible are still experimental so we without being proped up by C I'm sure this wouldn't be possible.
+- 32 bit because its complete enough to not hold me back while still being simple enough to learn with.
+- I am developing this on mac but also use linux so will eventually port the build system to use a package manager.
 
 ## Quick Start
 
 ### Requirements
 
 - **macOS** (Intel or Apple Silicon)
-- **Swift Development Snapshot** (6.0+ development branch)
+- **Swift Development Snapshot** (6.1+ development branch)
   - ⚠️ **Important**: Release Swift versions do NOT support Embedded Swift
   - Download from: https://www.swift.org/download/#snapshots
 
@@ -63,23 +62,6 @@ MAGI SYSTEM STARTUP SEQUENCE INITIATED
 | "i686-elf-gcc: command not found" | Run: `brew tap nativeos/i686-elf-toolchain && brew install i686-elf-gcc` |
 | Build fails                       | Check that Xcode has the development toolchain selected                  |
 
-## Technical Overview
-
-MAGIos uses a layered architecture that allows Swift to run at the kernel level:
-
-| Layer             | Language | Purpose                                    |
-| ----------------- | -------- | ------------------------------------------ |
-| **Swift Kernel**  | Swift    | Main OS logic, VGA control, MAGI interface |
-| **C Bootstrap**   | C        | Multiboot compliance, hardware setup       |
-| **Boot Assembly** | x86 ASM  | Protected mode, stack initialization       |
-
-### Why This Matters
-
-- **Memory Safety**: Swift's ownership model prevents common kernel bugs
-- **Modern Syntax**: Clean, readable code in a traditionally low-level domain
-- **Artistic Expression**: Demonstrates that systems programming can be beautiful
-- **Educational Value**: Shows how high-level languages can work at the hardware level
-
 ## Development
 
 ### Project Structure
@@ -113,7 +95,3 @@ MAGIos/
 2. **Swift First**: Use Swift for new features when possible
 3. **Check LLM_RULES.md**: Guidelines for AI-assisted development
 4. **Test in QEMU**: Verify changes boot and run correctly
-
-### Adding Features
-
-Most new functionality should be added to `src/swift/swift_kernel.swift`. Use the `@_cdecl` attribute to export Swift functions that can be called from C code.
