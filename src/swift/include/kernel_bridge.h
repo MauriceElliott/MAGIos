@@ -10,10 +10,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* === SWIFT KERNEL FUNCTIONS ===
  * These functions are implemented in Swift but callable from C
  * They are exported using @_cdecl attribute in the Swift code
@@ -143,10 +139,6 @@ void swift_kernel_init(const boot_info_t *boot_info);
 
 /* Process management (future) */
 /* int swift_create_process(const char *name); */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* KERNEL_BRIDGE_H */
 
