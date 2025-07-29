@@ -1,11 +1,10 @@
 // swift-tools-version: 6.0
 // MAGIos Embedded Swift Kernel Package
-// Simplified configuration for bare-metal kernel development
+// See PACKAGE_DOCUMENTATION at bottom for detailed documentation
 
 import PackageDescription
 
-// === PATH CONSTANTS ===
-// Centralized path configuration for easier maintenance
+// PATH_CONSTANTS
 let swiftKernelPath = "src/swernel"
 let kernelPath = "src/kernel"
 let supportPath = "src/support"
@@ -35,3 +34,30 @@ let package = Package(
         )
     ]
 )
+
+/*
+ * === PACKAGE_DOCUMENTATION ===
+ *
+ * PATH_CONSTANTS:
+ * Centralized path configuration for easier maintenance
+ * swiftKernelPath: Points to Swift kernel (swernel) source location
+ * kernelPath: Points to C kernel source location
+ * supportPath: Points to support libraries location
+ *
+ * PACKAGE_CONFIGURATION:
+ * Swift package configuration for bare-metal kernel development
+ * Static library type for embedding in kernel binary
+ * Simplified configuration focused on embedded Swift support
+ *
+ * EMBEDDED_SWIFT_SETTINGS:
+ * .enableExperimentalFeature("Embedded"): Enables embedded Swift mode
+ * Target architecture: i686-unknown-none-elf for 32-bit kernel
+ * -Xfrontend -disable-objc-interop: Disables Objective-C interoperability
+ * -Xclang-linker -nostdlib: Disables standard library linking
+ * -wmo: Whole module optimization for better embedded performance
+ *
+ * TARGET_CONFIGURATION:
+ * Single target "MAGIos" containing Swift kernel components
+ * Path points to swernel directory containing Swift kernel source
+ * All Swift settings configured for embedded kernel environment
+ */

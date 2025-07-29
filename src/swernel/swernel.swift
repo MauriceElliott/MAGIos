@@ -1,22 +1,13 @@
 /*
  * MAGIos Swift Kernel (Swernel) - MAGI System Core
- * Swift-first kernel implementation with Evangelion aesthetic
- * Part of the Terminal Dogma operating system
+ * See SWERNEL_DOCUMENTATION at bottom for detailed documentation
  */
 
-// === PATH CONSTANTS ===
-// Centralized path references for easier maintenance
-// Note: Swift kernel (swernel) is located at src/swernel/
+// PATH_CONSTANTS
+// Swift kernel (swernel) is located at src/swernel/
 // C kernel bridge is at src/kernel/include/kernel_bridge.h
 
-// === MAGI SYSTEM CONFIGURATION ===
-// CASPER: Character display subsystem
-// MELCHIOR: Memory management (future)
-// BALTHASAR: Boot coordination (future)
-
-// === C BRIDGE FUNCTIONS ===
-// External C wrapper functions we can call (no parameters needed)
-// These provide hardware abstraction from the C kernel layer
+// C_BRIDGE_FUNCTIONS
 @_silgen_name("swift_putchar_h")
 func c_putchar_h()
 
@@ -65,15 +56,9 @@ func c_putchar_newline()
 @_silgen_name("swift_set_color_yellow")
 func c_set_color_yellow()
 
-// === SWIFT KERNEL FUNCTIONS ===
-// MAGI CASPER subsystem - character display
-
-// Swift message display function
+// MAGI_CASPER_DISPLAY
 func swift_display_hello() {
-    // Set color to yellow
     c_set_color_yellow()
-
-    // Display "hello, from swift!"
     c_putchar_h()
     c_putchar_e()
     c_putchar_l()
@@ -95,34 +80,24 @@ func swift_display_hello() {
     c_putchar_newline()
 }
 
-// === KERNEL ENTRY POINTS ===
-// Main Swift kernel initialization - called from C bootstrap
-
-// Entry point function - called from C
+// KERNEL_ENTRY_POINT
 @_cdecl("swift_kernel_main")
 func swiftKernelMain() {
-    // Display our Swift message!
     swift_display_hello()
 }
 
-// === DEVELOPMENT FUNCTIONS ===
-// Functions for testing and debugging the Swift kernel
-
-// Test function that returns nothing
+// DEVELOPMENT_FUNCTIONS
 @_cdecl("swift_hello")
 func swiftHello() {
     swift_display_hello()
 }
 
-// Simple function for testing
 @_cdecl("swift_test")
 func swiftTest() {
     // Minimal test function
 }
 
-// === C COMPATIBILITY LAYER ===
-// Required functions that C code expects
-// These maintain compatibility with the C kernel bridge
+// C_COMPATIBILITY_LAYER
 @_cdecl("swift_terminal_setcolor")
 func swiftTerminalSetcolor() {
     // Minimal implementation - does nothing
@@ -132,3 +107,40 @@ func swiftTerminalSetcolor() {
 func swiftTerminalWritestring() {
     // Minimal implementation - does nothing
 }
+
+/*
+ * === SWERNEL_DOCUMENTATION ===
+ *
+ * PATH_CONSTANTS:
+ * Centralized path references for easier maintenance
+ * Note: Swift kernel (swernel) is located at src/swernel/
+ * C kernel bridge is at src/kernel/include/kernel_bridge.h
+ *
+ * MAGI_SYSTEM_CONFIGURATION:
+ * CASPER: Character display subsystem
+ * MELCHIOR: Memory management (future)
+ * BALTHASAR: Boot coordination (future)
+ *
+ * C_BRIDGE_FUNCTIONS:
+ * External C wrapper functions we can call (no parameters needed)
+ * These provide hardware abstraction from the C kernel layer
+ *
+ * MAGI_CASPER_DISPLAY:
+ * MAGI CASPER subsystem - character display
+ * Swift message display function
+ * Set color to yellow and display "hello, from swift!"
+ *
+ * KERNEL_ENTRY_POINT:
+ * Main Swift kernel initialization - called from C bootstrap
+ * Entry point function - called from C
+ *
+ * DEVELOPMENT_FUNCTIONS:
+ * Functions for testing and debugging the Swift kernel
+ * Test function that returns nothing
+ * Minimal test function
+ *
+ * C_COMPATIBILITY_LAYER:
+ * Required functions that C code expects
+ * These maintain compatibility with the C kernel bridge
+ * Minimal implementation - does nothing
+ */

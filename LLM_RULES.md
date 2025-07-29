@@ -2,16 +2,18 @@
 
 ## Project Overview
 
-**MAGIos** is a 32-bit operating system written primarily in **Swift**, designed as an art piece inspired by the aesthetic of the 1990s anime series *Neon Genesis Evangelion*. This is **not** business or casual-use software - it is an experimental, artistic operating system kernel that prioritizes aesthetic and technical exploration over practical utility.
+**MAGIos** is a 32-bit operating system written primarily in **Swift**, designed as an art piece inspired by the aesthetic of the 1990s anime series _Neon Genesis Evangelion_. This is **not** business or casual-use software - it is an experimental, artistic operating system kernel that prioritizes aesthetic and technical exploration over practical utility.
 
 ## Core Principles
 
 ### Language Priority
+
 1. **Swift First**: This project is Swift-first and foremost
 2. **C Where Necessary**: Use C only where Swift cannot be used (bootstrap, hardware initialization)
 3. **No Other Languages**: Avoid introducing additional languages unless absolutely critical
 
 ### Aesthetic & Theme
+
 - Maintain the Evangelion aesthetic throughout all code and documentation
 - Use MAGI system references (CASPER, MELCHIOR, BALTHASAR)
 - Preserve the 90s anime tech atmosphere in all user-facing elements
@@ -20,11 +22,13 @@
 ## LLM Interaction Guidelines
 
 ### Error Handling & Attempts
+
 - **Maximum 2 attempts** to fix any single issue before rechecking these rules
 - **Maximum 6 total attempts** without checking back with the user for direction
 - When stuck, always reference back to these rules and ask for human guidance
 
 ### Code Changes
+
 - Prioritize Swift solutions over C solutions
 - Maintain existing Evangelion theming in all modifications
 - Preserve the artistic nature of the project - don't over-optimize for practical use
@@ -32,26 +36,32 @@
 - Maintain compatibility with Embedded Swift requirements
 
 ### Build System Philosophy
+
 - Centralize configuration where possible
 - Minimize duplication between Makefile and build scripts
 - Prioritize clarity and maintainability over complex optimizations
 - Keep the aesthetic elements (status messages, progress indicators) while improving efficiency
 
 ### Documentation Style
+
 - Maintain Evangelion references in technical documentation
 - Use MAGI system terminology consistently
 - Keep the dramatic, anime-inspired tone in user-facing messages
 - Technical accuracy with thematic presentation
+- After updating logic, make sure the comments at the bottom of the file are updated to reflect the changes made.
+- If anything that is relevant for the rules file is discussed during usage make sure the rules file is updated.
 
 ## Technical Constraints
 
 ### Platform Requirements
+
 - **Target**: 32-bit x86 architecture
 - **Development Platform**: macOS preferred
 - **Swift Version**: Embedded Swift (development snapshots only)
 - **Boot Method**: Multiboot-compliant via GRUB
 
 ### Dependencies
+
 - Swift development toolchain (not release versions)
 - Cross-compiler toolchain (i686-elf-gcc)
 - QEMU for testing
@@ -84,4 +94,4 @@
 
 ---
 
-*AT Field operational. Pattern Blue. Synchronization rate holding steady.*
+_AT Field operational. Pattern Blue. Synchronization rate holding steady._

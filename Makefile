@@ -1,61 +1,54 @@
 # MAGIos Makefile - Swift-First Operating System
-# Simplified build system using centralized configuration
-# Evangelion-themed OS kernel built with Embedded Swift
+# See MAKEFILE_DOCUMENTATION at bottom for detailed documentation
 
-# === TOOLCHAIN CONFIGURATION ===
 export TOOLCHAINS=org.swift.62202505141a
 ASM = nasm
 CC = i686-elf-gcc
 LD = i686-elf-ld
 SWIFT = swiftc
 
-# === TARGET ARCHITECTURE ===
 TARGET_ARCH = i686-unknown-none-elf
 TARGET_BITS = 32
 
-# === COMPILATION FLAGS ===
+# COMPILATION_FLAGS
 ASMFLAGS = -f elf32
 CFLAGS = -m32 -ffreestanding -fno-stack-protector -fno-builtin -nostdlib -Wall -Wextra -std=c99
 LDFLAGS = -m elf_i386 -T linker.ld
 SWIFTFLAGS = -enable-experimental-feature Embedded -target $(TARGET_ARCH) -Xfrontend -disable-objc-interop -Xfrontend -function-sections -parse-stdlib -module-name SwiftKernel -wmo -c -emit-object
 
-# === DIRECTORIES ===
-# Centralized path configuration for easier maintenance
+# DIRECTORY_PATHS
 SRCDIR = src
 KERNEL_SRCDIR = $(SRCDIR)/kernel
 SWERNEL_SRCDIR = $(SRCDIR)/swernel
 SUPPORT_SRCDIR = $(SRCDIR)/support
 BUILDDIR = build
 ISODIR = iso
-
-# Legacy compatibility (updating gradually to swernel)
 SWIFT_SRCDIR = $(SWERNEL_SRCDIR)
 
-# === QEMU CONFIGURATION ===
+# QEMU_CONFIG
 QEMU_SYSTEM = qemu-system-i386
 QEMU_FLAGS = -cdrom $(ISO_FILE)
 QEMU_DEBUG_FLAGS = -s -S
 
-# === BUILD TARGETS ===
+# BUILD_TARGETS
 KERNEL_BINARY = $(BUILDDIR)/kernel.bin
 ISO_FILE = magios.iso
 
-# === MAGI SYSTEM NAMES ===
+# MAGI_SYSTEM_NAMES
 MAGI_CASPER = CASPER
 MAGI_MELCHIOR = MELCHIOR
 MAGI_BALTHASAR = BALTHASAR
 
-# === VERSION INFO ===
+# VERSION_INFO
 MAGIOS_VERSION = 0.0.1
 MAGIOS_CODENAME = Terminal Dogma
 
-# === BUILD OUTPUT STYLING ===
+# BUILD_STYLING
 SILENT_CHECKS = true
 SHOW_PROGRESS = true
 USE_MAGI_THEMING = true
 
-# === SOURCE FILES ===
-# Using centralized path variables for easier maintenance
+# SOURCE_FILES
 ASM_SOURCES = $(wildcard $(SRCDIR)/*.s)
 C_SOURCES = $(wildcard $(KERNEL_SRCDIR)/*.c)
 SWIFT_SOURCES = $(wildcard $(SWERNEL_SRCDIR)/*.swift)
@@ -66,13 +59,11 @@ SWIFT_OBJECT = $(BUILDDIR)/swift_kernel.o
 
 ALL_OBJECTS = $(ASM_OBJECTS) $(C_OBJECTS) $(SWIFT_OBJECT)
 
-# === PHONY TARGETS ===
 .PHONY: all clean iso run debug check-tools help swift-check magi-status test
 
-# === DEFAULT TARGET ===
 all: magi-status $(KERNEL_BINARY)
 
-# === MAGI SYSTEM STATUS ===
+# MAGI_STATUS_DISPLAY
 magi-status:
 ifeq ($(USE_MAGI_THEMING),true)
 	@echo "$(MAGI_CASPER)... Initializing"
@@ -81,7 +72,7 @@ ifeq ($(USE_MAGI_THEMING),true)
 	@echo ""
 endif
 
-# === TOOL VERIFICATION ===
+# TOOL_VERIFICATION
 check-tools:
 	@echo "Verifying MAGI subsystems..."
 	@for tool in nasm qemu-system-i386 i686-elf-gcc swiftc; do \
@@ -101,32 +92,31 @@ else
 endif
 	@echo ""
 
-# === BUILD DIRECTORY ===
 $(BUILDDIR):
 	@mkdir -p $(BUILDDIR)
 
-# === SWIFT COMPILATION ===
+# SWIFT_COMPILATION
 $(SWIFT_OBJECT): $(SWIFT_SOURCES) | $(BUILDDIR)
 ifeq ($(SHOW_PROGRESS),true)
 	@echo "🔹 Compiling Swift kernel components..."
 endif
 	@swiftc $(SWIFTFLAGS) $(SWIFT_SOURCES) -o $@
 
-# === C COMPILATION ===
+# C_COMPILATION
 $(BUILDDIR)/%.o: $(KERNEL_SRCDIR)/%.c | $(BUILDDIR)
 ifeq ($(SHOW_PROGRESS),true)
 	@echo "🔹 Compiling C bridge: $<"
 endif
 	@$(CC) $(CFLAGS) -I$(KERNEL_SRCDIR) -c $< -o $@
 
-# === ASSEMBLY ===
+# ASSEMBLY_COMPILATION
 $(BUILDDIR)/%.o: $(SRCDIR)/%.s | $(BUILDDIR)
 ifeq ($(SHOW_PROGRESS),true)
 	@echo "🔹 Assembling boot code: $<"
 endif
 	@$(ASM) $(ASMFLAGS) $< -o $@
 
-# === KERNEL BINARY ===
+# KERNEL_LINKING
 $(KERNEL_BINARY): $(ALL_OBJECTS)
 ifeq ($(SHOW_PROGRESS),true)
 	@echo ""
@@ -137,7 +127,7 @@ ifeq ($(SHOW_PROGRESS),true)
 	@echo "   Binary size: $$(ls -lh $@ | awk '{print $$5}')"
 endif
 
-# === SWIFT SYNTAX CHECK ===
+# SWIFT_SYNTAX_CHECK
 swift-check:
 	@echo "🔍 Checking Swift syntax..."
 	@swiftc -typecheck $(SWIFT_SOURCES) \
@@ -146,7 +136,7 @@ swift-check:
 		-parse-stdlib
 	@echo "✅ Swift syntax check passed"
 
-# === ISO CREATION ===
+# ISO_CREATION
 iso: $(KERNEL_BINARY)
 ifeq ($(SHOW_PROGRESS),true)
 	@echo "📀 Creating Terminal Dogma ISO..."
@@ -166,7 +156,7 @@ ifeq ($(SHOW_PROGRESS),true)
 	@echo "✅ ISO created: $(ISO_FILE) ($$(ls -lh $(ISO_FILE) | awk '{print $$5}'))"
 endif
 
-# === RUN IN QEMU ===
+# QEMU_RUN
 run: iso
 ifeq ($(USE_MAGI_THEMING),true)
 	@echo "🚀 Launching MAGIos in QEMU..."
@@ -175,19 +165,19 @@ ifeq ($(USE_MAGI_THEMING),true)
 endif
 	@$(QEMU_SYSTEM) $(QEMU_FLAGS)
 
-# === DEBUG MODE ===
+# DEBUG_MODE
 debug: iso
 	@echo "🐛 Launching MAGIos in debug mode..."
 	@echo "   Connect GDB to localhost:1234"
 	@echo ""
 	@$(QEMU_SYSTEM) $(QEMU_FLAGS) $(QEMU_DEBUG_FLAGS)
 
-# === TESTING ===
+# TESTING
 test: iso
 	@echo "🧪 Testing MAGIos kernel..."
 	@timeout 10s $(QEMU_SYSTEM) $(QEMU_FLAGS) -nographic -serial stdio || true
 
-# === DEVELOPMENT HELPERS ===
+# DEVELOPMENT_HELPERS
 show-symbols: $(KERNEL_BINARY)
 	@echo "📋 Kernel symbols:"
 	@i686-elf-nm $(KERNEL_BINARY) | grep -E "(swift_|main|start)" | head -15
@@ -200,7 +190,7 @@ size: $(KERNEL_BINARY)
 	@ls -lh $(KERNEL_BINARY)
 	@if [ -f "$(ISO_FILE)" ]; then ls -lh $(ISO_FILE); fi
 
-# === CLEANUP ===
+# CLEANUP
 clean:
 ifeq ($(SHOW_PROGRESS),true)
 	@echo "🧹 Cleaning Terminal Dogma..."
@@ -210,7 +200,7 @@ ifeq ($(SHOW_PROGRESS),true)
 	@echo "✅ Clean completed"
 endif
 
-# === HELP ===
+# HELP_DISPLAY
 help:
 	@echo ""
 	@echo "========================================="
@@ -246,10 +236,83 @@ ifeq ($(USE_MAGI_THEMING),true)
 	@echo "Terminal Dogma awaits your command... 🤖"
 endif
 
-# === ERROR HANDLING ===
 .DELETE_ON_ERROR:
 
-# Force rebuild
 rebuild: clean all
 
 .PHONY: rebuild show-symbols size
+
+#
+# === MAKEFILE_DOCUMENTATION ===
+#
+# TOOLCHAIN_CONFIGURATION:
+# export TOOLCHAINS=org.swift.62202505141a - Specific Swift toolchain version
+# Target architecture and compilation settings for embedded Swift kernel
+#
+# COMPILATION_FLAGS:
+# ASMFLAGS: Assembler flags for 32-bit ELF output
+# CFLAGS: C compiler flags for freestanding kernel environment
+# LDFLAGS: Linker flags using custom linker script
+# SWIFTFLAGS: Swift compiler flags for embedded mode
+#
+# DIRECTORY_PATHS:
+# Centralized path configuration for easier maintenance
+# KERNEL_SRCDIR: C kernel source location
+# SWERNEL_SRCDIR: Swift kernel (swernel) source location
+# SUPPORT_SRCDIR: Support library location
+#
+# MAGI_SYSTEM_NAMES:
+# Evangelion-themed component names for build output
+# CASPER: Character display subsystem
+# MELCHIOR: Memory management
+# BALTHASAR: Boot coordination
+#
+# BUILD_STYLING:
+# Control verbosity and theming of build output
+#
+# SOURCE_FILES:
+# Wildcard patterns to find all source files in their respective directories
+# Pattern substitution to generate object file lists
+#
+# MAGI_STATUS_DISPLAY:
+# Evangelion-themed startup sequence display
+#
+# TOOL_VERIFICATION:
+# Checks for required build tools before compilation
+#
+# SWIFT_COMPILATION:
+# Compiles Swift kernel components with embedded flags
+#
+# C_COMPILATION:
+# Compiles C kernel bridge with include path configuration
+#
+# ASSEMBLY_COMPILATION:
+# Assembles bootloader code
+#
+# KERNEL_LINKING:
+# Links all object files into final kernel binary
+#
+# SWIFT_SYNTAX_CHECK:
+# Validates Swift syntax without generating output
+#
+# ISO_CREATION:
+# Creates bootable ISO with GRUB bootloader
+#
+# QEMU_RUN:
+# Launches kernel in QEMU emulator
+#
+# DEBUG_MODE:
+# Launches kernel with GDB debugging support
+#
+# TESTING:
+# Quick automated test run
+#
+# DEVELOPMENT_HELPERS:
+# show-symbols: Display kernel symbol table
+# size: Show binary size information
+#
+# CLEANUP:
+# Removes all build artifacts
+#
+# HELP_DISPLAY:
+# Shows available commands and usage information

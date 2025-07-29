@@ -1,10 +1,10 @@
 #!/bin/bash
 # MAGIos Build Script - Terminal Dogma Build System
-# Swift-first 32-bit OS kernel with Evangelion aesthetic
+# See BUILD_SCRIPT_DOCUMENTATION at bottom for detailed documentation
 
 set -e
 
-# === BUILD CONFIGURATION ===
+# BUILD_CONFIGURATION
 export TOOLCHAINS=org.swift.62202505141a
 ASM="nasm"
 CC="i686-elf-gcc"
@@ -12,16 +12,14 @@ LD="i686-elf-ld"
 SWIFT="swiftc"
 
 TARGET_ARCH="i686-unknown-none-elf"
-# === CENTRALIZED PATH CONFIGURATION ===
-# Path constants for easier maintenance and updates
+
+# PATH_CONFIGURATION
 SRCDIR="src"
 KERNEL_SRCDIR="$SRCDIR/kernel"
 SWERNEL_SRCDIR="$SRCDIR/swernel"
 SUPPORT_SRCDIR="$SRCDIR/support"
 BUILDDIR="build"
 ISODIR="iso"
-
-# Legacy compatibility (updating gradually to swernel)
 SWIFT_SRCDIR="$SWERNEL_SRCDIR"
 KERNEL_BINARY="$BUILDDIR/kernel.bin"
 ISO_FILE="magios.iso"
@@ -29,76 +27,70 @@ ISO_FILE="magios.iso"
 MAGI_CASPER="CASPER"
 MAGI_MELCHIOR="MELCHIOR"
 MAGI_BALTHASAR="BALTHASAR"
-MAGIOS_VERSION="0.0.1"
 
-SILENT_CHECKS=true
-SHOW_PROGRESS=true
+# COLOR_CODES
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+NC='\033[0m'
 
-# === MAGI SYSTEM INITIALIZATION ===
-echo ""
-echo "========================================="
-echo "MAGI SYSTEM STARTUP SEQUENCE INITIATED"
-echo "Terminal Dogma Build System"
-echo "========================================="
-echo ""
+# DEPENDENCY_INSTALLATION
+install_deps_macos() {
+    echo "Installing macOS dependencies..."
 
-# === PLATFORM VERIFICATION ===
-if [[ "$OSTYPE" != "darwin"* ]]; then
-    echo "❌ ERROR: macOS required for MAGIos development"
-    exit 1
-fi
-
-# === DEPENDENCY FUNCTIONS ===
-install_homebrew() {
     if ! command -v brew &> /dev/null; then
         echo "Installing Homebrew..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         eval "$([[ -f "/opt/homebrew/bin/brew" ]] && /opt/homebrew/bin/brew shellenv || /usr/local/bin/brew shellenv)"
     fi
+
+    local tools_to_install=()
+
+    for tool in nasm qemu; do
+        if ! brew list $tool &>/dev/null; then
+            tools_to_install+=($tool)
+        fi
+    done
+
+    if [ ${#tools_to_install[@]} -gt 0 ]; then
+        echo "Installing missing tools: ${tools_to_install[*]}"
+        brew install "${tools_to_install[@]}"
+    fi
+
+    if ! command -v i686-elf-gcc &> /dev/null; then
+        echo "Installing cross-compiler toolchain..."
+        brew tap nativeos/i686-elf-toolchain
+        brew install i686-elf-toolchain
+    fi
 }
 
+# TOOL_VERIFICATION
 check_tools() {
     local missing_tools=()
 
-    # Check each required tool
     for tool in nasm qemu swiftc; do
         if ! command -v $tool &> /dev/null; then
             missing_tools+=($tool)
         fi
     done
 
-    # Check cross-compiler separately
     if ! command -v i686-elf-gcc &> /dev/null; then
         missing_tools+=(i686-elf-gcc)
     fi
 
-    # Check grub separately
-    if ! command -v i686-elf-grub-mkrescue &> /dev/null && ! command -v grub-mkrescue &> /dev/null; then
-        missing_tools+=(grub)
-    fi
-
-    # Install missing tools
     if [ ${#missing_tools[@]} -gt 0 ]; then
-        echo "Installing missing tools: ${missing_tools[*]}"
-        install_homebrew
-
-        for tool in "${missing_tools[@]}"; do
-            case $tool in
-                i686-elf-gcc)
-                    brew tap nativeos/i686-elf-toolchain 2>/dev/null || true
-                    brew install i686-elf-binutils i686-elf-gcc 2>/dev/null || echo "⚠️ Cross-compiler installation may need manual setup"
-                    ;;
-                grub)
-                    brew install i686-elf-grub 2>/dev/null || brew install grub 2>/dev/null || echo "⚠️ Failed to install grub"
-                    ;;
-                *)
-                    brew install $tool 2>/dev/null || echo "⚠️ Failed to install $tool"
-                    ;;
-            esac
-        done
+        echo "Missing tools: ${missing_tools[*]}"
+        case "$(uname)" in
+            Darwin) install_deps_macos ;;
+            *) echo "Please install missing tools manually" && exit 1 ;;
+        esac
     fi
 }
 
+# SWIFT_VERIFICATION
 verify_swift() {
     if ! command -v swiftc &> /dev/null; then
         echo "❌ ERROR: Swift compiler not found"
@@ -106,7 +98,6 @@ verify_swift() {
         exit 1
     fi
 
-    # Check if it's a development version (preferred)
     if ! swift --version | grep -q "experimental\|development\|main"; then
         echo "⚠️  WARNING: Release Swift detected, development snapshot recommended"
         echo "   For full Embedded Swift support, install development snapshot from:"
@@ -116,65 +107,119 @@ verify_swift() {
     fi
 }
 
-# === TOOL VERIFICATION ===
-echo "${MAGI_CASPER}... Checking toolchain"
-check_tools
-
-echo "${MAGI_MELCHIOR}... Verifying Swift"
-verify_swift
-
-echo "${MAGI_BALTHASAR}... Initializing build system"
-echo ""
-
-if [ "$SILENT_CHECKS" != "true" ]; then
-    echo "All MAGI subsystems operational ✅"
+# BUILD_FUNCTIONS
+build_kernel() {
+    echo -e "${CYAN}🔨 Building MAGIos Swift kernel...${NC}"
+    make all
+    echo -e "${GREEN}✅ Swift kernel compilation successful!${NC}"
     echo ""
-fi
+}
 
-# === BUILD PROCESS ===
-echo "🔨 Building MAGIos Swift kernel..."
-
-# Clean previous builds
-[ -d "$BUILDDIR" ] && rm -rf "$BUILDDIR" "$ISODIR" "$ISO_FILE" 2>/dev/null || true
-
-# Build using make
-if make all; then
-    echo "✅ Swift kernel compilation successful!"
+create_iso() {
+    echo -e "${BLUE}📀 Creating Terminal Dogma ISO...${NC}"
+    make iso
     echo ""
+}
 
-    # Create ISO
-    echo "📀 Creating Terminal Dogma ISO..."
-    if make iso; then
-        echo ""
-        echo "========================================="
-        echo "🎉 Terminal Dogma Operational!"
-        echo "========================================="
-        echo ""
-        echo "MAGIos ${MAGIOS_VERSION} ready for deployment"
-        echo "ISO: $ISO_FILE ($(ls -lh $ISO_FILE 2>/dev/null | awk '{print $5}' || echo 'unknown'))"
-        echo ""
-        echo "AT Field operational. Pattern Blue. 🤖"
-        echo ""
-    else
-        echo "❌ ISO creation failed"
-        exit 1
-    fi
-else
-    echo "❌ Kernel compilation failed"
-    echo ""
-    echo "Debug: make swift-check    # Verify Swift syntax"
-    echo "Debug: make check-tools    # Verify toolchain"
-    exit 1
-fi
-
-# === AUTO-RUN ===
-if [[ "$1" == "--run" ]] || [[ "$1" == "-r" ]]; then
-    echo "🚀 Launching MAGIos in QEMU..."
+run_qemu() {
+    echo -e "${PURPLE}🚀 Launching MAGIos in QEMU...${NC}"
+    echo -e "   ${CYAN}AT Field operational. Pattern Blue.${NC}"
     echo ""
     make run
-fi
+}
 
-echo "Usage: ./build.sh [--run]"
-echo "       make help    # Show all commands"
-echo ""
-echo "Terminal Dogma build complete. Ready for synchronization. 🎌"
+# MAIN_SCRIPT
+main() {
+    echo "========================================="
+    echo "MAGI SYSTEM STARTUP SEQUENCE INITIATED"
+    echo "Terminal Dogma Build System"
+    echo "========================================="
+    echo ""
+
+    echo -e "${CYAN}$MAGI_CASPER... Checking toolchain${NC}"
+    check_tools
+
+    echo -e "${YELLOW}$MAGI_MELCHIOR... Verifying Swift${NC}"
+    verify_swift
+
+    echo -e "${PURPLE}$MAGI_BALTHASAR... Initializing build system${NC}"
+    echo ""
+
+    build_kernel
+    create_iso
+
+    if [[ "$1" == "--run" ]]; then
+        run_qemu
+    fi
+
+    echo "========================================="
+    echo -e "${GREEN}🎉 Terminal Dogma Operational!${NC}"
+    echo "========================================="
+    echo ""
+    echo "MAGIos 0.0.1 ready for deployment"
+    echo "ISO: $ISO_FILE ($(ls -lh $ISO_FILE 2>/dev/null | awk '{print $5}' || echo 'Unknown size'))"
+    echo ""
+    echo -e "${CYAN}AT Field operational. Pattern Blue.${NC} 🤖"
+    echo ""
+    echo "Usage: ./build.sh [--run]"
+    echo "       make help    # Show all commands"
+    echo ""
+    echo -e "${PURPLE}Terminal Dogma build complete. Ready for synchronization.${NC} 🎌"
+}
+
+main "$@"
+
+#
+# === BUILD_SCRIPT_DOCUMENTATION ===
+#
+# BUILD_CONFIGURATION:
+# Sets up the toolchain environment for cross-compilation
+# export TOOLCHAINS: Specifies Swift toolchain version for embedded Swift
+# Tool variables: Defines cross-compiler and assembler tools
+# TARGET_ARCH: Target architecture for embedded Swift compilation
+#
+# PATH_CONFIGURATION:
+# Centralized path definitions for easier maintenance and updates
+# SRCDIR: Main source directory
+# KERNEL_SRCDIR: C kernel source location
+# SWERNEL_SRCDIR: Swift kernel (swernel) source location
+# SUPPORT_SRCDIR: Support library location
+# Legacy compatibility maintained for gradual migration
+#
+# COLOR_CODES:
+# ANSI color codes for styled terminal output
+# Enhances readability and provides Evangelion-themed aesthetic
+#
+# DEPENDENCY_INSTALLATION:
+# install_deps_macos: Automatically installs required tools on macOS
+# Uses Homebrew package manager
+# Installs cross-compiler toolchain from custom tap
+# Checks for existing installations to avoid duplicates
+#
+# TOOL_VERIFICATION:
+# check_tools: Verifies all required build tools are available
+# Automatically triggers installation on supported platforms
+# Reports missing tools and guides manual installation
+#
+# SWIFT_VERIFICATION:
+# verify_swift: Checks Swift compiler availability and version
+# Warns about release versions vs development snapshots
+# Embedded Swift requires development snapshot for full feature support
+#
+# BUILD_FUNCTIONS:
+# build_kernel: Compiles the Swift kernel using Makefile
+# create_iso: Creates bootable ISO image
+# run_qemu: Launches the kernel in QEMU emulator
+#
+# MAIN_SCRIPT:
+# Coordinates the entire build process
+# Displays MAGI system startup sequence (Evangelion theme)
+# Handles command line arguments (--run flag)
+# Provides status updates and final summary
+# Shows usage information and build results
+#
+# EVANGELION_THEMING:
+# MAGI system references throughout (CASPER, MELCHIOR, BALTHASAR)
+# "Terminal Dogma" and "AT Field" references
+# Color-coded output matching anime aesthetic
+# Japanese flag emoji for completion message
