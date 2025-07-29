@@ -77,3 +77,8 @@ start:
 ; - Set up our own GDT (GRUB's is sufficient for now)
 ; - Enable specific CPU features or check CPU capabilities
 ; - Set up initial page directory for paging
+
+; === GNU-STACK SECTION ===
+; This section marks the stack as non-executable to satisfy GNU ld requirements
+; Without this, the linker warns about missing .note.GNU-stack section
+section .note.GNU-stack noalloc noexec nowrite progbits

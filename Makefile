@@ -7,12 +7,21 @@ CC = i686-elf-gcc
 LD = i686-elf-ld
 SWIFT = swiftc
 
+# Setup Swift development snapshot if available
+SWIFTLY_CHECK := $(shell command -v swiftly 2>/dev/null)
+ifneq ($(SWIFTLY_CHECK),)
+SWIFTLY_TOOLCHAIN := $(shell swiftly use 2>/dev/null | head -1)
+ifneq ($(findstring main-snapshot,$(SWIFTLY_TOOLCHAIN)),)
+SWIFT = swiftly run swiftc
+endif
+endif
+
 TARGET_ARCH = i686-unknown-none-elf
 TARGET_BITS = 32
 
 # COMPILATION_FLAGS
 ASMFLAGS = -f elf32
-CFLAGS = -m32 -ffreestanding -fno-stack-protector -fno-builtin -nostdlib -Wall -Wextra -std=c99
+CFLAGS = -m32 -ffreestanding -fno-stack-protector -fno-builtin -nostdlib -Wall -Wextra -std=c99 -Wa,--noexecstack
 LDFLAGS = -m elf_i386 -T $(LINKER_SCRIPT)
 SWIFTFLAGS = -enable-experimental-feature Embedded -target $(TARGET_ARCH) -Xfrontend -disable-objc-interop -Xfrontend -function-sections -parse-stdlib -module-name SwiftKernel -wmo -c -emit-object
 

@@ -19,6 +19,13 @@
 - Preserve the 90s anime tech atmosphere in all user-facing elements
 - Terminal output should feel like interacting with the MAGI supercomputers
 
+### Build System Quality
+
+- Tool checks must verify actual required tools (e.g. qemu-system-i386, not generic qemu)
+- Swift development snapshots should be automatically detected and used when available via swiftly
+- Linker warnings about GNU-stack sections should be prevented through proper compilation flags
+- Build output should be clean and professional while maintaining the Evangelion theming
+
 ## LLM Interaction Guidelines
 
 ### Error Handling & Attempts
@@ -62,11 +69,12 @@
 
 ### Dependencies
 
-- Swift development toolchain (not release versions)
+- Swift development toolchain (automatically detected via swiftly when available)
 - Cross-compiler toolchain (i686-elf-gcc)
-- QEMU for testing
+- QEMU for testing (specifically qemu-system-i386)
 - NASM for assembly
 - Standard build tools (make, etc.)
+- Swiftly tool manager (recommended for Swift snapshot management)
 
 ## Forbidden Actions
 
@@ -91,6 +99,17 @@
 3. Maintain the Evangelion aesthetic
 4. Ask the human for guidance rather than making assumptions
 5. Remember: this is art, not enterprise software
+
+## Recent Improvements
+
+### Build System Fixes (2025-07-28)
+
+1. **Tool Detection**: Fixed qemu tool check to verify `qemu-system-i386` instead of generic `qemu`
+2. **Swift Environment**: Implemented automatic Swift development snapshot detection and activation via swiftly
+3. **Linker Warnings**: Eliminated `.note.GNU-stack` warnings by adding proper compilation flags and assembly sections
+4. **Environment Setup**: Added robust Swift development snapshot environment configuration
+
+These changes ensure clean builds with proper development toolchain usage while maintaining the Evangelion aesthetic and Swift-first philosophy.
 
 ---
 

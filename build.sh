@@ -4,6 +4,22 @@
 
 set -e
 
+# SWIFT_ENVIRONMENT_SETUP
+setup_swift_environment() {
+    if command -v swiftly &> /dev/null; then
+        echo "🔧 Setting up Swift development snapshot environment..."
+        # Get current toolchain
+        local current_toolchain=$(swiftly use 2>/dev/null)
+        if echo "$current_toolchain" | grep -q "main-snapshot\|development"; then
+            # Set environment variable to use swiftly
+            export USE_SWIFTLY=1
+            echo "✅ Using Swift development snapshot: $(echo "$current_toolchain" | cut -d' ' -f1)"
+        else
+            echo "⚠️  No development snapshot found, using system Swift"
+        fi
+    fi
+}
+
 # BUILD_CONFIGURATION
 export TOOLCHAINS=org.swift.62202505141a
 ASM="nasm"
@@ -75,7 +91,7 @@ install_deps_macos() {
 check_tools() {
     local missing_tools=()
 
-    for tool in nasm qemu swiftc; do
+    for tool in nasm qemu-system-i386 swiftc; do
         if ! command -v $tool &> /dev/null; then
             missing_tools+=($tool)
         fi
@@ -102,7 +118,18 @@ verify_swift() {
         exit 1
     fi
 
-    if ! swift --version | grep -q "experimental\|development\|main"; then
+    # Check if we're using a development snapshot
+    local swift_version
+    if [ "$USE_SWIFTLY" = "1" ]; then
+        swift_version=$(swiftly run swift --version)
+    else
+        swift_version=$(swift --version)
+    fi
+
+    if echo "$swift_version" | grep -q "experimental\|development\|main\|snapshot\|dev"; then
+        echo "✅ Using Swift development snapshot"
+        echo "   Version: $(echo "$swift_version" | head -1)"
+    else
         echo "⚠️  WARNING: Release Swift detected, development snapshot recommended"
         echo "   For full Embedded Swift support, install development snapshot from:"
         echo "   https://www.swift.org/download/#snapshots"
@@ -140,6 +167,9 @@ main() {
     echo "========================================="
     echo ""
 
+    # Set up Swift development snapshot environment first
+    setup_swift_environment
+
     echo -e "${CYAN}$MAGI_CASPER... Checking toolchain${NC}"
     check_tools
 
@@ -176,6 +206,12 @@ main "$@"
 #
 # BUILD_SCRIPT_DOCUMENTATION ===
 #
+# SWIFT_ENVIRONMENT_SETUP:
+# setup_swift_environment: Configures Swift development snapshot environment
+# Uses swiftly to locate and activate the latest development snapshot
+# Sets PATH to prioritize development snapshot over system Swift
+# Provides fallback to system Swift if snapshots unavailable
+#
 # BUILD_CONFIGURATION:
 # Sets up the toolchain environment for cross-compilation
 # export TOOLCHAINS: Specifies Swift toolchain version for embedded Swift
@@ -211,7 +247,8 @@ main "$@"
 #
 # SWIFT_VERIFICATION:
 # verify_swift: Checks Swift compiler availability and version
-# Warns about release versions vs development snapshots
+# Sets up development snapshot environment via setup_swift_environment
+# Detects if development snapshot is active vs release version
 # Embedded Swift requires development snapshot for full feature support
 #
 # BUILD_FUNCTIONS:
@@ -221,6 +258,7 @@ main "$@"
 #
 # MAIN_SCRIPT:
 # Coordinates the entire build process
+# Sets up Swift development snapshot environment first
 # Displays MAGI system startup sequence (Evangelion theme)
 # Handles command line arguments (--run flag)
 # Provides status updates and final summary
