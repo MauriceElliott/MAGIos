@@ -42,6 +42,7 @@ GRUB_CONFIG = $(SRCDIR)/grub.cfg
 QEMU_SYSTEM = qemu-system-i386
 QEMU_FLAGS = -cdrom $(ISO_FILE)
 QEMU_DEBUG_FLAGS = -s -S
+QEMU_TEST_FLAGS = -cdrom $(ISO_FILE) -nographic -monitor none -serial stdio -no-reboot -no-shutdown -display none
 
 # BUILD_TARGETS
 KERNEL_BINARY = $(BUILDDIR)/kernel.bin
@@ -187,8 +188,15 @@ debug: iso
 
 # TESTING
 test: iso
-	@echo "🧪 Testing MAGIos kernel..."
-	@timeout 10s $(QEMU_SYSTEM) $(QEMU_FLAGS) -nographic -serial stdio || true
+	@echo "🧪 Testing MAGIos kernel in headless mode..."
+	@echo "   Booting Terminal Dogma for diagnostic sequence..."
+	@echo ""
+	@echo "--- KERNEL OUTPUT START ---"
+	@timeout 15s $(QEMU_SYSTEM) $(QEMU_TEST_FLAGS) 2>/dev/null || true
+	@echo ""
+	@echo "--- KERNEL OUTPUT END ---"
+	@echo ""
+	@echo "✅ Headless test completed (15s timeout)"
 
 # DEVELOPMENT_HELPERS
 show-symbols: $(KERNEL_BINARY)
@@ -226,7 +234,7 @@ help:
 	@echo "  iso          - Create bootable ISO"
 	@echo "  run          - Build and launch in QEMU"
 	@echo "  debug        - Launch with GDB debugging"
-	@echo "  test         - Quick kernel test"
+	@echo "  test         - Quick headless kernel test"
 	@echo ""
 	@echo "Development:"
 	@echo "  swift-check  - Verify Swift syntax"
@@ -238,7 +246,8 @@ help:
 	@echo "  check-tools  - Verify toolchain"
 	@echo ""
 	@echo "Quick Start:"
-	@echo "  ./build.sh --run    # Build and run"
+	@echo "  ./build.sh --run    # Build and run in GUI"
+	@echo "  ./build.sh --test   # Build and test headless"
 	@echo ""
 	@echo "Variables (from build.config):"
 	@echo "  Target: $(TARGET_ARCH)"
@@ -322,7 +331,9 @@ rebuild: clean all
 # Launches kernel with GDB debugging support
 #
 # TESTING:
-# Quick automated test run
+# test: Runs kernel in headless QEMU for automated testing
+# Uses nographic mode with stdio output and 15-second timeout
+# Ideal for CI/CD pipelines and quick verification
 #
 # DEVELOPMENT_HELPERS:
 # show-symbols: Display kernel symbol table

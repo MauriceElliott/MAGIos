@@ -159,6 +159,18 @@ run_qemu() {
     make run
 }
 
+test_qemu() {
+    echo -e "${YELLOW}🧪 Testing MAGIos kernel in headless mode...${NC}"
+    echo -e "   ${CYAN}Terminal Dogma diagnostic sequence initiated${NC}"
+    echo -e "   ${PURPLE}Output will appear below (timeout: 15s)${NC}"
+    echo ""
+    echo "========================================="
+    make test
+    echo "========================================="
+    echo -e "${GREEN}✅ Kernel test completed${NC}"
+    echo ""
+}
+
 # MAIN_SCRIPT
 main() {
     echo "========================================="
@@ -184,6 +196,8 @@ main() {
 
     if [[ "$1" == "--run" ]]; then
         run_qemu
+    elif [[ "$1" == "--test" ]]; then
+        test_qemu
     fi
 
     echo "========================================="
@@ -195,7 +209,7 @@ main() {
     echo ""
     echo -e "${CYAN}AT Field operational. Pattern Blue.${NC} 🤖"
     echo ""
-    echo "Usage: ./build.sh [--run]"
+    echo "Usage: ./build.sh [--run|--test]"
     echo "       make help    # Show all commands"
     echo ""
     echo -e "${PURPLE}Terminal Dogma build complete. Ready for synchronization.${NC} 🎌"
@@ -254,7 +268,8 @@ main "$@"
 # BUILD_FUNCTIONS:
 # build_kernel: Compiles the Swift kernel using Makefile
 # create_iso: Creates bootable ISO image
-# run_qemu: Launches the kernel in QEMU emulator
+# run_qemu: Launches the kernel in QEMU emulator with GUI
+# test_qemu: Runs kernel in headless QEMU for automated testing
 #
 # MAIN_SCRIPT:
 # Coordinates the entire build process

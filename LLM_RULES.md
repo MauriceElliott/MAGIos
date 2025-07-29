@@ -33,6 +33,7 @@
 - **Maximum 2 attempts** to fix any single issue before rechecking these rules
 - **Maximum 6 total attempts** without checking back with the user for direction
 - When stuck, always reference back to these rules and ask for human guidance
+- While making changes and rebuilding, always use ./build.sh --test over --run as that way it removes the need for human intervention and ensures the llm can read the output.
 
 ### Code Changes
 
