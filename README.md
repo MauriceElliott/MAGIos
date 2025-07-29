@@ -2,6 +2,8 @@
 
 A 32-bit operating system kernel written in Odin, inspired by the aesthetics and themes of Neon Genesis Evangelion.
 
+[!MAGIos](resources/MAGIos.png)
+
 ## Overview
 
 MAGIos is experimental. It is a conduit for me to learn how an OS works as well as giving me an outlet for creativity. I have chosen Odin for this project as out of the choices, it filled me with the least sadness over leaving my beloved swift behind, I do not know if I will ever make it to GUI applications, currently I am only looking at making this work as a terminal type application, possibly something that could run under something similar to WSL on Windows, but we will see.
