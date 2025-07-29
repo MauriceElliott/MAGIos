@@ -46,7 +46,7 @@ typedef struct multiboot_info {
 } multiboot_info_t;
 
 // MAGI_BOOT_SEQUENCE
-static void magi_boot_message(void) {
+void magi_boot_message(void) {
   terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_CYAN, VGA_COLOR_BLACK));
   terminal_writestring("MAGI SYSTEM INITIALIZATION\n");
   terminal_writestring("==============================\n\n");
@@ -181,10 +181,7 @@ static boot_info_t process_multiboot_info(uint32_t magic,
 void kernel_main(void) {
   __asm__ volatile("" ::: "memory");
 
-  // Display MAGI boot sequence
-  magi_boot_message();
-
-  // Initialize Swift kernel
+  // Initialize Swift kernel (Swift will handle MAGI boot sequence)
   initialize_swernel();
 
   // Display final system status
@@ -266,7 +263,7 @@ void kernel_main(void) {
  *
  * MAIN_KERNEL_ENTRY:
  * CRITICAL: This is called from our assembly boot code.
- * Displays MAGI boot sequence, initializes Swift kernel, and coordinates
+ * Initializes Swift kernel which handles MAGI boot sequence, and coordinates
  * between C bootstrap and Swift kernel components.
  *
  * INFINITE_HALT_LOOP:

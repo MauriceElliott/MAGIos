@@ -29,6 +29,9 @@ void *memmove(void *dest, const void *src, size_t n);
 size_t magi_heap_available(void);
 int magi_heap_check(void);
 
+// MAGI_BOOT_FUNCTIONS
+void magi_boot_message(void);
+
 // SWIFT_KERNEL_FUNCTIONS
 void swift_kernel_main(void);
 void swift_terminal_writestring(const char *data);

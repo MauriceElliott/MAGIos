@@ -11,6 +11,10 @@ func magi_heap_available() -> Int
 @_silgen_name("magi_heap_check")
 func magi_heap_check() -> Int32
 
+// MAGI_BOOT_IMPORTS
+@_silgen_name("magi_boot_message")
+func magi_boot_message()
+
 // MAGI_TERMINAL_IMPORTS
 @_silgen_name("terminal_writestring")
 func terminal_writestring(_ data: UnsafePointer<CChar>)
@@ -42,52 +46,13 @@ func VGA_ENTRY_COLOR(_ fg: UInt8, _ bg: UInt8) -> UInt8 {
 
 // MAGI_SWIFT_DISPLAY
 func magi_swift_display() {
-    terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK))
-    terminal_writestring("\nSWIFT KERNEL ONLINE\n")
-    terminal_writestring("==============================\n")
+    // Call the C MAGI boot message function
+    magi_boot_message()
 
-    terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK))
-    terminal_writestring("Swift Memory System: OPERATIONAL\n")
-
-    // Test MAGI memory allocation
-    if let testPtr = magi_memory_alloc(1024) {
-        terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_GREEN, VGA_COLOR_BLACK))
-        terminal_writestring("✓ MAGI malloc test: SUCCESS\n")
-
-        let available = magi_heap_available()
-        terminal_writestring("✓ Heap available: ")
-        // Simple number display (limited without full stdlib)
-        if available > 1_000_000 {
-            terminal_writestring("~1MB+\n")
-        } else if available > 500000 {
-            terminal_writestring("~500KB+\n")
-        } else {
-            terminal_writestring("Limited\n")
-        }
-
-        magi_memory_free(testPtr)
-        terminal_writestring("✓ MAGI free test: SUCCESS\n")
-    } else {
-        terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_RED, VGA_COLOR_BLACK))
-        terminal_writestring("✗ MAGI memory test: FAILED\n")
-    }
-
-    // Check heap integrity
-    let integrity = magi_heap_check()
-    if integrity != 0 {
-        terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_GREEN, VGA_COLOR_BLACK))
-        terminal_writestring("✓ AT Field integrity: MAINTAINED\n")
-    } else {
-        terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_RED, VGA_COLOR_BLACK))
-        terminal_writestring("✗ AT Field integrity: COMPROMISED\n")
-    }
-
-    terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_MAGENTA, VGA_COLOR_BLACK))
-    terminal_writestring("\nEvangelion Unit-01 Swift subsystem ready.\n")
-    terminal_writestring("Synchronization with MAGI complete.\n")
-
-    terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLACK))
-    terminal_writestring("Awaiting pilot commands...\n\n")
+    // // Add Swift-specific status message
+    // terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_MAGENTA, VGA_COLOR_BLACK))
+    // terminal_writestring("\nSwift subsystem synchronized with MAGI.\n")
+    // terminal_writestring("Pattern Blue confirmed. Evangelion Unit-01 ready.\n")
 }
 
 func boot() {
@@ -110,6 +75,10 @@ func swiftKernelMain() {
  * magi_heap_available: Check available heap space
  * magi_heap_check: Verify AT Field integrity
  *
+ * MAGI_BOOT_IMPORTS:
+ * Swift interface to C boot message function
+ * magi_boot_message: Calls the main MAGI boot sequence from kernel.c
+ *
  * MAGI_TERMINAL_IMPORTS:
  * Swift interfaces to terminal display functions
  * terminal_writestring: Display text strings
@@ -122,9 +91,9 @@ func swiftKernelMain() {
  *
  * MAGI_SWIFT_DISPLAY:
  * Main Swift kernel display function
- * Tests MAGI memory allocation system
- * Displays system status with Evangelion theming
- * Demonstrates Swift-C memory function integration
+ * Calls the C MAGI boot message for consistency
+ * Adds Swift-specific status messages
+ * Maintains unified Evangelion theming across C and Swift
  *
  * KERNEL_ENTRY_POINT:
  * Main Swift kernel initialization - called from C bootstrap
