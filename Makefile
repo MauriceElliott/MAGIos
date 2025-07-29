@@ -20,10 +20,16 @@ LDFLAGS = -m elf_i386 -T linker.ld
 SWIFTFLAGS = -enable-experimental-feature Embedded -target $(TARGET_ARCH) -Xfrontend -disable-objc-interop -Xfrontend -function-sections -parse-stdlib -module-name SwiftKernel -wmo -c -emit-object
 
 # === DIRECTORIES ===
+# Centralized path configuration for easier maintenance
 SRCDIR = src
-SWIFT_SRCDIR = src/swift
+KERNEL_SRCDIR = $(SRCDIR)/kernel
+SWERNEL_SRCDIR = $(SRCDIR)/swernel
+SUPPORT_SRCDIR = $(SRCDIR)/support
 BUILDDIR = build
 ISODIR = iso
+
+# Legacy compatibility (updating gradually to swernel)
+SWIFT_SRCDIR = $(SWERNEL_SRCDIR)
 
 # === QEMU CONFIGURATION ===
 QEMU_SYSTEM = qemu-system-i386
@@ -49,12 +55,13 @@ SHOW_PROGRESS = true
 USE_MAGI_THEMING = true
 
 # === SOURCE FILES ===
+# Using centralized path variables for easier maintenance
 ASM_SOURCES = $(wildcard $(SRCDIR)/*.s)
-C_SOURCES = $(wildcard $(SRCDIR)/*.c)
-SWIFT_SOURCES = $(wildcard $(SWIFT_SRCDIR)/*.swift)
+C_SOURCES = $(wildcard $(KERNEL_SRCDIR)/*.c)
+SWIFT_SOURCES = $(wildcard $(SWERNEL_SRCDIR)/*.swift)
 
 ASM_OBJECTS = $(ASM_SOURCES:$(SRCDIR)/%.s=$(BUILDDIR)/%.o)
-C_OBJECTS = $(C_SOURCES:$(SRCDIR)/%.c=$(BUILDDIR)/%.o)
+C_OBJECTS = $(C_SOURCES:$(KERNEL_SRCDIR)/%.c=$(BUILDDIR)/%.o)
 SWIFT_OBJECT = $(BUILDDIR)/swift_kernel.o
 
 ALL_OBJECTS = $(ASM_OBJECTS) $(C_OBJECTS) $(SWIFT_OBJECT)
@@ -106,11 +113,11 @@ endif
 	@swiftc $(SWIFTFLAGS) $(SWIFT_SOURCES) -o $@
 
 # === C COMPILATION ===
-$(BUILDDIR)/%.o: $(SRCDIR)/%.c | $(BUILDDIR)
+$(BUILDDIR)/%.o: $(KERNEL_SRCDIR)/%.c | $(BUILDDIR)
 ifeq ($(SHOW_PROGRESS),true)
 	@echo "🔹 Compiling C bridge: $<"
 endif
-	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) -I$(KERNEL_SRCDIR) -c $< -o $@
 
 # === ASSEMBLY ===
 $(BUILDDIR)/%.o: $(SRCDIR)/%.s | $(BUILDDIR)

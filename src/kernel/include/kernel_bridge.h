@@ -7,6 +7,17 @@
 #ifndef KERNEL_BRIDGE_H
 #define KERNEL_BRIDGE_H
 
+/* === PATH CONSTANTS ===
+ * Centralized path configuration for easier maintenance
+ * These reflect the current project structure after reorganization
+ */
+#define KERNEL_BRIDGE_PATH "src/kernel/include/kernel_bridge.h"
+#define SWIFT_KERNEL_PATH "src/swernel/swernel.swift"
+#define C_KERNEL_PATH "src/kernel/kernel.c"
+#define BOOT_ASM_PATH "src/boot.s"
+#define SUPPORT_CSTDLIB_PATH "src/support/cstdlib/"
+#define SUPPORT_SWTDLIB_PATH "src/support/swtdlib/"
+
 #include <stddef.h>
 #include <stdint.h>
 

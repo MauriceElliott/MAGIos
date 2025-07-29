@@ -12,10 +12,17 @@ LD="i686-elf-ld"
 SWIFT="swiftc"
 
 TARGET_ARCH="i686-unknown-none-elf"
+# === CENTRALIZED PATH CONFIGURATION ===
+# Path constants for easier maintenance and updates
 SRCDIR="src"
-SWIFT_SRCDIR="src/swift"
+KERNEL_SRCDIR="$SRCDIR/kernel"
+SWERNEL_SRCDIR="$SRCDIR/swernel"
+SUPPORT_SRCDIR="$SRCDIR/support"
 BUILDDIR="build"
 ISODIR="iso"
+
+# Legacy compatibility (updating gradually to swernel)
+SWIFT_SRCDIR="$SWERNEL_SRCDIR"
 KERNEL_BINARY="$BUILDDIR/kernel.bin"
 ISO_FILE="magios.iso"
 

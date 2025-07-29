@@ -10,7 +10,7 @@ MAGIos is an art piece that explores what happens when you build an operating sy
 
 ## What This Is
 
-- This is an educational piece, and a bit of an art project for me to learn how to build all sorts of software. 
+- This is an educational piece, and a bit of an art project for me to learn how to build all sorts of software.
 - I'm writing this using C and Swift, C because its a necessity, and Swift because I just love its ergonmics, I think they're a good fit for each other. That being said the features I'm using to make this possible are still experimental so we without being proped up by C I'm sure this wouldn't be possible.
 - 32 bit because its complete enough to not hold me back while still being simple enough to learn with.
 - I am developing this on mac but also use linux so will eventually port the build system to use a package manager.
@@ -70,11 +70,17 @@ MAGI SYSTEM STARTUP SEQUENCE INITIATED
 MAGIos/
 ├── src/
 │   ├── boot.s                    # x86 assembly bootloader
-│   ├── kernel.c                  # C bootstrap & hardware init
-│   └── swift/
-│       └── swift_kernel.swift    # Main Swift kernel logic
+│   ├── kernel/
+│   │   ├── kernel.c              # C bootstrap & hardware init
+│   │   └── include/
+│   │       └── kernel_bridge.h   # C/Swift interoperability header
+│   ├── swernel/
+│   │   └── swernel.swift         # Swift kernel (MAGI system core)
+│   └── support/
+│       ├── cstdlib/              # C standard library extensions
+│       └── swtdlib/              # Swift standard library extensions
 ├── build.sh                      # Automated build script
-├── Makefile                      # Build system
+├── Makefile                      # Build system (with centralized paths)
 ├── LLM_RULES.md                  # Guidelines for AI assistance
 └── linker.ld                     # Memory layout specification
 ```

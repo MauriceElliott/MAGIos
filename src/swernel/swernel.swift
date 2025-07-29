@@ -1,7 +1,22 @@
-// MAGIos Swift Kernel - Message Display Implementation
-// Uses C wrapper functions to display "hello, from swift!"
+/*
+ * MAGIos Swift Kernel (Swernel) - MAGI System Core
+ * Swift-first kernel implementation with Evangelion aesthetic
+ * Part of the Terminal Dogma operating system
+ */
 
+// === PATH CONSTANTS ===
+// Centralized path references for easier maintenance
+// Note: Swift kernel (swernel) is located at src/swernel/
+// C kernel bridge is at src/kernel/include/kernel_bridge.h
+
+// === MAGI SYSTEM CONFIGURATION ===
+// CASPER: Character display subsystem
+// MELCHIOR: Memory management (future)
+// BALTHASAR: Boot coordination (future)
+
+// === C BRIDGE FUNCTIONS ===
 // External C wrapper functions we can call (no parameters needed)
+// These provide hardware abstraction from the C kernel layer
 @_silgen_name("swift_putchar_h")
 func c_putchar_h()
 
@@ -50,6 +65,9 @@ func c_putchar_newline()
 @_silgen_name("swift_set_color_yellow")
 func c_set_color_yellow()
 
+// === SWIFT KERNEL FUNCTIONS ===
+// MAGI CASPER subsystem - character display
+
 // Swift message display function
 func swift_display_hello() {
     // Set color to yellow
@@ -77,12 +95,18 @@ func swift_display_hello() {
     c_putchar_newline()
 }
 
+// === KERNEL ENTRY POINTS ===
+// Main Swift kernel initialization - called from C bootstrap
+
 // Entry point function - called from C
 @_cdecl("swift_kernel_main")
 func swiftKernelMain() {
     // Display our Swift message!
     swift_display_hello()
 }
+
+// === DEVELOPMENT FUNCTIONS ===
+// Functions for testing and debugging the Swift kernel
 
 // Test function that returns nothing
 @_cdecl("swift_hello")
@@ -96,7 +120,9 @@ func swiftTest() {
     // Minimal test function
 }
 
+// === C COMPATIBILITY LAYER ===
 // Required functions that C code expects
+// These maintain compatibility with the C kernel bridge
 @_cdecl("swift_terminal_setcolor")
 func swiftTerminalSetcolor() {
     // Minimal implementation - does nothing

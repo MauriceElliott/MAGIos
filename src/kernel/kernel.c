@@ -4,11 +4,17 @@
  * It provides basic bootstrapping in C and then calls Swift kernel functions
  */
 
+/* === PATH CONSTANTS ===
+ * Centralized path definitions for easier maintenance
+ */
+#define KERNEL_BRIDGE_HEADER "include/kernel_bridge.h"
+#define SWIFT_KERNEL_DIR "../swernel/"
+
 #include <stddef.h> /* For size_t and NULL definitions */
 #include <stdint.h> /* For fixed-width integer types (uint8_t, uint16_t, etc.) */
 
 /* Include our Swift bridge header for interoperability */
-#include "swift/include/kernel_bridge.h"
+#include KERNEL_BRIDGE_HEADER
 
 /* === SWIFT RUNTIME STUBS ===
  * Minimal implementations of standard library functions required by Swift

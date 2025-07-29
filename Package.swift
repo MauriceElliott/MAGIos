@@ -4,6 +4,12 @@
 
 import PackageDescription
 
+// === PATH CONSTANTS ===
+// Centralized path configuration for easier maintenance
+let swiftKernelPath = "src/swernel"
+let kernelPath = "src/kernel"
+let supportPath = "src/support"
+
 let package = Package(
     name: "MAGIos",
     products: [
@@ -16,7 +22,7 @@ let package = Package(
     targets: [
         .target(
             name: "MAGIos",
-            path: "src/swift",
+            path: swiftKernelPath,
             swiftSettings: [
                 .enableExperimentalFeature("Embedded"),
                 .unsafeFlags([
