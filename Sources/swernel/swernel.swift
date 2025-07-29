@@ -45,7 +45,7 @@ func VGA_ENTRY_COLOR(_ fg: UInt8, _ bg: UInt8) -> UInt8 {
 }
 
 // MAGI_SWIFT_DISPLAY
-func magi_swift_display() {
+func magi_display() {
     // Call the C MAGI boot message function
     magi_boot_message()
 
@@ -56,7 +56,7 @@ func magi_swift_display() {
 }
 
 func boot() {
-    magi_swift_display()
+    magi_display()
 }
 
 // KERNEL_ENTRY_POINT
