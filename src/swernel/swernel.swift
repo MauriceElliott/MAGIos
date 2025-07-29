@@ -97,17 +97,6 @@ func swiftTest() {
     // Minimal test function
 }
 
-// C_COMPATIBILITY_LAYER
-@_cdecl("swift_terminal_setcolor")
-func swiftTerminalSetcolor() {
-    // Minimal implementation - does nothing
-}
-
-@_cdecl("swift_terminal_writestring")
-func swiftTerminalWritestring() {
-    // Minimal implementation - does nothing
-}
-
 /*
  * === SWERNEL_DOCUMENTATION ===
  *
@@ -115,11 +104,6 @@ func swiftTerminalWritestring() {
  * Centralized path references for easier maintenance
  * Note: Swift kernel (swernel) is located at src/swernel/
  * C kernel bridge is at src/kernel/include/kernel_bridge.h
- *
- * MAGI_SYSTEM_CONFIGURATION:
- * CASPER: Character display subsystem
- * MELCHIOR: Memory management (future)
- * BALTHASAR: Boot coordination (future)
  *
  * C_BRIDGE_FUNCTIONS:
  * External C wrapper functions we can call (no parameters needed)
@@ -133,11 +117,6 @@ func swiftTerminalWritestring() {
  * KERNEL_ENTRY_POINT:
  * Main Swift kernel initialization - called from C bootstrap
  * Entry point function - called from C
- *
- * DEVELOPMENT_FUNCTIONS:
- * Functions for testing and debugging the Swift kernel
- * Test function that returns nothing
- * Minimal test function
  *
  * C_COMPATIBILITY_LAYER:
  * Required functions that C code expects

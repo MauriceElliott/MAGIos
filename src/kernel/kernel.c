@@ -281,19 +281,6 @@ void debug_print(const char *message) {
 }
 #endif
 
-// SYSTEM_DIAGNOSTICS
-void display_system_diagnostics(void) {
-  swift_terminal_setcolor(
-      VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK));
-  swift_terminal_writestring("System Diagnostics:\n");
-
-  swift_terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLACK));
-  swift_terminal_writestring("- C Kernel: Active (integration mode)\n");
-  swift_terminal_writestring("- Swift Kernel: Active (embedded mode)\n");
-  swift_terminal_writestring("- Boot Protocol: Multiboot v1\n");
-  swift_terminal_writestring("- Architecture: i686-elf\n\n");
-}
-
 /*
  * === KERNEL_ARCHITECTURE_NOTES ===
  *
