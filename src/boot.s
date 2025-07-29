@@ -1,6 +1,6 @@
-; MAGIos Boot Assembly Code
+; MAGIos Boot Assembly Code - Odin Version
 ; This file contains the multiboot header and initial kernel entry point
-; It sets up the basic environment needed before jumping to C code
+; It sets up the basic environment needed before jumping to Odin code
 
 ; === MULTIBOOT SPECIFICATION CONSTANTS ===
 ; These magic numbers are defined by the Multiboot specification
@@ -21,7 +21,7 @@ align 4                           ; Align on 4-byte boundary as required by spec
     dd CHECKSUM                   ; Checksum (magic + flags + checksum = 0)
 
 ; === STACK ALLOCATION SECTION ===
-; We need to set up a stack before we can call C functions
+; We need to set up a stack before we can call Odin functions
 ; The BSS section contains uninitialized data (zeroed out at boot)
 section .bss
 align 16                          ; Align stack on 16-byte boundary (recommended for x86)
@@ -34,23 +34,28 @@ section .text
 
 ; === KERNEL ENTRY POINT ===
 ; CRITICAL: This is where GRUB transfers control after loading the kernel
-global start:function (start.end - start)   ; Make 'start' visible to linker, mark as function
-start:
+global _start:function (_start.end - _start)   ; Make '_start' visible to linker, mark as function
+_start:
     ; === STACK SETUP ===
-    ; CRITICAL: Set up stack pointer before calling any C functions
+    ; CRITICAL: Set up stack pointer before calling any Odin functions
     ; x86 stacks grow downward, so we point to the top of our reserved space
     mov esp, stack_top            ; ESP = stack pointer register, point to top of stack
 
-    ; === PREPARE FOR C CODE ===
+    ; === PREPARE FOR ODIN CODE ===
     ; At this point we have:
     ; - A valid stack (required for function calls)
     ; - Protected mode enabled (done by GRUB)
     ; - Basic GDT loaded (done by GRUB)
     ; - Multiboot information in registers (EAX = magic, EBX = info structure)
 
+    ; === PRESERVE MULTIBOOT INFO ===
+    ; Save multiboot magic number and info pointer before calling Odin
+    push ebx                      ; Push multiboot info structure pointer
+    push eax                      ; Push magic number
+
     ; === CALL MAIN KERNEL FUNCTION ===
-    ; CRITICAL: Jump to our C kernel code
-    extern kernel_main            ; Declare external symbol (defined in kernel.c)
+    ; CRITICAL: Jump to our Odin kernel code
+    extern kernel_main            ; Declare external symbol (defined in kernel.odin)
     call kernel_main              ; Call our main kernel function
 
     ; === INFINITE HALT LOOP ===
@@ -67,16 +72,14 @@ start:
 ; 2. GRUB reads our kernel file and finds the multiboot header
 ; 3. GRUB loads our kernel at 0x00100000 (1MB) as specified in linker script
 ; 4. GRUB switches to protected mode and sets up basic GDT
-; 5. GRUB jumps to our 'start' symbol (this code)
+; 5. GRUB jumps to our '_start' symbol (this code)
 ; 6. We set up our stack and call kernel_main()
-; 7. Our C code takes over from there
+; 7. Our Odin code takes over from there
 
-; === NON-CRITICAL ENHANCEMENTS FOR FUTURE ===
-; Things we could add later but aren't needed for basic "Hello World":
-; - Save multiboot information (EAX, EBX registers) before calling C code
-; - Set up our own GDT (GRUB's is sufficient for now)
-; - Enable specific CPU features or check CPU capabilities
-; - Set up initial page directory for paging
+; === ODIN INTEGRATION NOTES ===
+; - The multiboot info is passed on the stack to kernel_main
+; - Odin's calling convention is compatible with C
+; - Stack must be properly aligned for Odin function calls
 
 ; === GNU-STACK SECTION ===
 ; This section marks the stack as non-executable to satisfy GNU ld requirements
