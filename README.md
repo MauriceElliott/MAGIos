@@ -2,7 +2,7 @@
 
 A 32-bit operating system kernel written in Odin, inspired by the aesthetics and themes of Neon Genesis Evangelion.
 
-[!MAGIos](resources/MAGIos.png)
+![MAGIos](resources/MAGIos.png)
 
 ## Overview
 
