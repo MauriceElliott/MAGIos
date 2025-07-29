@@ -6,7 +6,11 @@ A 32-bit operating system kernel written in Odin, inspired by the aesthetics and
 
 ## Overview
 
-MAGIos is experimental. It is a conduit for me to learn how an OS works as well as giving me an outlet for creativity. I have chosen Odin for this project as out of the choices, it filled me with the least sadness over leaving my beloved swift behind, I do not know if I will ever make it to GUI applications, currently I am only looking at making this work as a terminal type application, possibly something that could run under something similar to WSL on Windows, but we will see.
+MAGIos is experimental. It is a conduit for me to learn how an OS works as well as giving me an outlet for creativity.
+
+I have chosen Odin for this project as out of the choices, it filled me with the least sadness over leaving my beloved swift behind.
+
+I do not know if I will ever make it to GUI applications, currently I am only looking at making this work as a terminal type application, possibly something that could run under something similar to WSL on Windows, but we will see.
 
 ## Features
 
@@ -76,7 +80,5 @@ This project is licensed under the GNU GENERAL PUBLIC LICENSE Version 3.
 ---
 
 "God's in his heaven, all's right with the world." - NERv Moto
-
-<br>
 
 "Get in the fucking robot shinji" - Commander Ikari
