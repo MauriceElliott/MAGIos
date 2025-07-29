@@ -1,203 +1,128 @@
-# MAGIos Swift Edition
+# MAGIos - NERV Operating System
 
-![Logo](resources/MAGIos.png)
+A 32-bit operating system kernel written in Odin, inspired by the aesthetics and themes of Neon Genesis Evangelion.
 
-**An experimental 32-bit operating system written in Swift, inspired by Neon Genesis Evangelion**
+## Overview
 
-MAGIos is an art piece that explores what happens when you build an operating system kernel primarily in Swift, with the aesthetic and terminology of the MAGI supercomputer system from the 1990s anime _Neon Genesis Evangelion_. This is not practical software - it's an artistic and technical exploration.
+MAGIos is an experimental art piece that explores operating system development through the lens of 1990s anime aesthetics. Built with the Odin programming language, it features a minimal kernel that boots with Evangelion-themed messages referencing the MAGI supercomputer system.
 
-![Screenshot](resources/firstLook.png)
+## Features
 
-## What This Is
+- **Pure Odin Implementation**: Kernel logic written entirely in Odin with minimal assembly bootstrap
+- **Evangelion Theming**: Boot sequences reference MAGI system (CASPER, MELCHIOR, BALTHASAR)
+- **VGA Text Mode**: Classic 80x25 character display with 16 colors
+- **Multiboot Compliant**: Boots via GRUB bootloader
+- **Cross-Platform Build**: Supports macOS and Linux development environments
 
-- This is an educational piece, and a bit of an art project for me to learn how to build all sorts of software.
-- I'm writing this using C and Swift, C because its a necessity, and Swift because I just love its ergonmics, I think they're a good fit for each other. That being said the features I'm using to make this possible are still experimental so we without being proped up by C I'm sure this wouldn't be possible.
-- 32 bit because its complete enough to not hold me back while still being simple enough to learn with.
-- I am developing this on mac but also use linux so will eventually port the build system to use a package manager.
+## Requirements
 
-## Quick Start
+- Odin compiler (latest version)
+- i686-elf cross-compiler toolchain
+- NASM assembler
+- QEMU emulator
+- GRUB tools (grub-mkrescue)
 
-### Requirements
-
-- **macOS** (Intel or Apple Silicon)
-- **Swift Development Snapshot** (6.1+ development branch)
-  - ⚠️ **Important**: Release Swift versions do NOT support Embedded Swift
-  - Download from: https://www.swift.org/download/#snapshots
-
-### Simple Build & Run
+### Installing Dependencies (macOS)
 
 ```bash
-git clone <repository-url>
-cd MAGIos
+# Install Homebrew if not already installed
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install tools
+brew install nasm qemu
+
+# Install cross-compiler
+brew tap nativeos/i686-elf-toolchain
+brew install i686-elf-toolchain
+
+# Install Odin from https://odin-lang.org/docs/install/
+```
+
+## Building
+
+```bash
+# Build the kernel and create bootable ISO
+./build.sh
+
+# Clean build artifacts
+./build.sh --clean
+```
+
+## Running
+
+```bash
+# Run in QEMU with GUI
 ./build.sh --run
+
+# Run in headless mode (for testing)
+./build.sh --test
 ```
 
-The build script will automatically:
-
-- Install missing dependencies via Homebrew
-- Verify your Swift toolchain supports Embedded Swift
-- Build the Swift kernel and create a bootable ISO
-- Launch MAGIos in QEMU
-
-### Expected Output
-
-```
-========================================
-MAGI SYSTEM STARTUP SEQUENCE INITIATED
-========================================
-
-     CASPER...      ONLINE
-     MELCHIOR...    ONLINE
-     BALTHASAR...   ONLINE
-
-     MAGIos v0.0.1 - Swift Edition
-     AT Field operational. Pattern Blue.
-```
-
-### Troubleshooting
-
-| Issue                             | Solution                                                                 |
-| --------------------------------- | ------------------------------------------------------------------------ |
-| "embedded Swift is not supported" | Install Swift development snapshot, not release                          |
-| "i686-elf-gcc: command not found" | Run: `brew tap nativeos/i686-elf-toolchain && brew install i686-elf-gcc` |
-| Build fails                       | Check that Xcode has the development toolchain selected                  |
-
-## Development
-
-### Project Structure
+## Project Structure
 
 ```
 MAGIos/
 ├── src/
-│   ├── boot.s                    # x86 assembly bootloader
-│   ├── grub.cfg                  # GRUB bootloader configuration
-│   ├── linker.ld                 # Memory layout specification
-│   ├── kernel/
-│   │   ├── kernel.c              # C bootstrap & hardware init
-│   │   └── include/
-│   │       └── kernel_bridge.h   # C/Swift interoperability header
-│   ├── swernel/
-│   │   └── swernel.swift         # Swift kernel (MAGI system core)
-│   └── support/
-│       ├── cstdlib/              # C standard library extensions
-│       └── swtdlib/              # Swift standard library extensions
-├── build.sh                      # Automated build script
-├── Makefile                      # Build system (with centralized paths)
-└── LLM_RULES.md                  # Guidelines for AI assistance
+│   ├── boot.s          # Multiboot header and assembly bootstrap
+│   ├── kernel.odin     # Main kernel implementation
+│   ├── linker.ld       # Linker script for memory layout
+│   └── grub.cfg        # GRUB bootloader configuration
+├── build.sh            # Build script with MAGI theming
+├── README.md           # This file
+├── LICENSE             # MIT License
+└── LLM_RULES.md       # Guidelines for LLM interactions
 ```
 
-### Development Commands
+## Architecture
 
-| Command            | Purpose                     |
-| ------------------ | --------------------------- |
-| `./build.sh`       | Build kernel and ISO        |
-| `./build.sh --run` | Build and launch in QEMU    |
-| `make clean`       | Remove build artifacts      |
-| `make debug`       | Launch with GDB debugging   |
-| `make help`        | Show all available commands |
+The kernel follows a simple architecture:
 
-## Next Development Steps
+1. **Boot Sequence**: Assembly bootstrap sets up stack and calls Odin kernel
+2. **VGA Driver**: Direct memory-mapped I/O to VGA text buffer at 0xB8000
+3. **MAGI Display**: Evangelion-themed boot messages and status display
+4. **Halt Loop**: Kernel enters infinite halt after initialization
 
-### 1. MAGI Interrupt Handling System
+## Development
 
-**Status: Planned**
+### Building from Source
 
-Implement a hardware interrupt system with Evangelion theming for keyboard input, timer interrupts, and system events.
+The build process uses a custom build script that:
 
-**Technical Details:**
+1. Compiles assembly bootstrap with NASM
+2. Compiles Odin kernel with freestanding target
+3. Links objects according to linker script
+4. Creates bootable ISO with GRUB
 
-- Set up Interrupt Descriptor Table (IDT) in cernel
-- Implement keyboard interrupt handler for user input
-- Add timer interrupts for system heartbeat
-- Create Swift-safe interrupt wrapper functions
-- MAGI-themed interrupt classification (Pattern Blue/Orange/etc.)
+### Odin Kernel Details
 
-**User Experience:**
+The kernel is compiled with these Odin flags:
 
-- Real-time keyboard input processing
-- System responds to user commands
-- Interrupt status displayed with Angel detection terminology
-- Foundation for interactive MAGI command interface
+- `-target:freestanding_i386` - No OS dependencies
+- `-no-bounds-check` - Disable runtime bounds checking
+- `-no-crt` - No C runtime
+- `-default-to-nil-allocator` - No default allocator
+- `-no-entry-point` - Custom entry from assembly
 
-### 2. MAGI Command Interface
+## Evangelion References
 
-**Status: Planned**
+The kernel includes numerous references to Neon Genesis Evangelion:
 
-Build an interactive command-line interface that feels like operating the MAGI supercomputers from NERV headquarters.
+- **MAGI System**: The three supercomputers CASPER, MELCHIOR, and BALTHASAR
+- **NERV OS**: The fictional organization's operating system
+- **Pattern Blue**: Angel detection status
+- **AT Field**: Absolute Terror Field references
+- **Terminal Dogma**: The deepest level of NERV headquarters
 
-**Technical Details:**
+## License
 
-- Command parser and dispatcher in Swift
-- MAGI-themed command set (status, diagnose, sync, etc.)
-- Command history and auto-completion
-- Multi-line command support for complex operations
-- Integration with memory management system
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-**User Experience:**
+## Acknowledgments
 
-```
-MAGI> status
-CASPER:    ONLINE - Pattern Blue nominal
-MELCHIOR:  ONLINE - Memory utilization 23%
-BALTHASAR: ONLINE - AT Field stable
+- Inspired by Neon Genesis Evangelion by Hideaki Anno
+- Built with the Odin programming language by gingerBill
+- Multiboot specification by Free Software Foundation
 
-MAGI> diagnose memory
-Heap Status: 1,048,576 bytes total
-Available:   805,432 bytes (76.8%)
-Blocks:      12 allocated, 8 free
-Integrity:   AT Field maintained ✓
+---
 
-MAGI> help
-Available commands:
-  status     - System status report
-  diagnose   - Hardware diagnostics
-  sync       - Synchronize MAGI cores
-  eva        - Evangelion unit status
-  angel      - Threat assessment
-```
-
-### 3. AT Field Memory Visualization
-
-**Status: Planned**
-
-Real-time memory monitoring and visualization system with Evangelion-inspired graphics and terminology.
-
-**Technical Details:**
-
-- Live heap fragmentation display
-- Memory allocation/deallocation tracking
-- Visual representation of memory blocks
-- Performance metrics with MAGI terminology
-- Memory leak detection ("Angel intrusion")
-
-**User Experience:**
-
-- ASCII art memory maps showing heap status
-- Real-time updates during allocation/free operations
-- Color-coded memory regions (allocated/free/corrupted)
-- MAGI-style status reports with technical readouts
-- Alerts for memory issues using Angel threat levels
-
-**Example Output:**
-
-```
-AT FIELD MEMORY ANALYSIS
-========================
-Heap Map: [████████░░░░████░░░░░░██████████░░░░]
-Status:   Pattern Blue - Nominal
-Threats:  No Angel signatures detected
-
-Block Details:
-  0x100000-0x102000: EVA-01 Core [ALLOCATED]
-  0x102000-0x104000: Free Space [AVAILABLE]
-  0x104000-0x108000: MAGI Buffer [ALLOCATED]
-
-Synchronization Rate: 98.3%
-```
-
-## Contributing
-
-1. **Follow the Aesthetic**: Maintain Evangelion theming
-2. **Swift First**: Use Swift for new features when possible
-3. **Check LLM_RULES.md**: Guidelines for AI-assisted development
-4. **Test in QEMU**: Verify changes boot and run correctly
+_"God's in his heaven, all's right with the world."_ - NERV motto

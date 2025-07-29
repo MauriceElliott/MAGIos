@@ -2,16 +2,15 @@
 
 ## Project Overview
 
-**MAGIos** is a 32-bit operating system written primarily in **Swift**, designed as an art piece inspired by the aesthetic of the 1990s anime series _Neon Genesis Evangelion_. This is **not** business or casual-use software - it is an experimental, artistic operating system kernel that prioritizes aesthetic and technical exploration over practical utility.
+**MAGIos** is a 32-bit operating system written in **Odin**, designed as an art piece inspired by the aesthetic of the 1990s anime series _Neon Genesis Evangelion_. This is **not** business or casual-use software - it is an experimental, artistic operating system kernel that prioritizes aesthetic and technical exploration over practical utility.
 
 ## Core Principles
 
 ### Language Priority
 
-1. **Swift First**: This project is Swift-first and foremost
-2. **C Where Necessary**: Use C for bootstrap, hardware initialization, and critical memory management
-3. **Memory Management Exception**: Full C implementations are acceptable for malloc/free and related memory functions
-4. **No Other Languages**: Avoid introducing additional languages unless absolutely critical
+1. **Odin First**: This project uses Odin as its primary systems programming language
+2. **Assembly Where Necessary**: Use assembly for boot sequence and low-level initialization
+3. **No Other Languages**: The kernel is implemented purely in Odin with minimal assembly bootstrap
 
 ### Aesthetic & Theme
 
@@ -23,8 +22,7 @@
 ### Build System Quality
 
 - Tool checks must verify actual required tools (e.g. qemu-system-i386, not generic qemu)
-- Swift development snapshots should be automatically detected and used when available via swiftly
-- Linker warnings about GNU-stack sections should be prevented through proper compilation flags
+- Build script should handle both --test (headless) and --run (GUI) modes for QEMU
 - Build output should be clean and professional while maintaining the Evangelion theming
 
 ## LLM Interaction Guidelines
@@ -38,19 +36,17 @@
 
 ### Code Changes
 
-- Prioritize Swift solutions over C solutions (except for memory management)
-- Full C memory management implementations are encouraged for performance and compatibility
+- Prioritize idiomatic Odin solutions
 - Maintain existing Evangelion theming in all modifications
 - Preserve the artistic nature of the project - don't over-optimize for practical use
 - Keep the 32-bit architecture constraint
-- Maintain compatibility with Embedded Swift requirements
+- Keep comments accurate and up-to-date with implementation
 
 ### Build System Philosophy
 
-- Centralize configuration where possible
-- Minimize duplication between Makefile and build scripts
-- Prioritize clarity and maintainability over complex optimizations
-- Keep the aesthetic elements (status messages, progress indicators) while improving efficiency
+- Keep build script simple and focused
+- Prioritize clarity and maintainability
+- Keep the aesthetic elements (status messages, progress indicators)
 
 ### Documentation Style
 
@@ -58,8 +54,8 @@
 - Use MAGI system terminology consistently
 - Keep the dramatic, anime-inspired tone in user-facing messages
 - Technical accuracy with thematic presentation
-- After updating logic, make sure the comments at the bottom of the file are updated to reflect the changes made.
-- If anything that is relevant for the rules file is discussed during usage make sure the rules file is updated.
+- After updating logic, make sure the comments are updated to reflect the changes made
+- If anything that is relevant for the rules file is discussed during usage make sure the rules file is updated
 
 ## Technical Constraints
 
@@ -67,62 +63,51 @@
 
 - **Target**: 32-bit x86 architecture
 - **Development Platform**: macOS preferred
-- **Swift Version**: Embedded Swift (development snapshots only)
+- **Odin Version**: Latest stable Odin compiler
 - **Boot Method**: Multiboot-compliant via GRUB
 
 ### Dependencies
 
-- Swift development toolchain (automatically detected via swiftly when available)
-- Cross-compiler toolchain (i686-elf-gcc)
+- Odin compiler
+- Cross-compiler toolchain (i686-elf-gcc for assembly)
 - QEMU for testing (specifically qemu-system-i386)
 - NASM for assembly
-- Standard build tools (make, etc.)
-- Swiftly tool manager (recommended for Swift snapshot management)
+- Standard build tools (bash, etc.)
 
 ## Forbidden Actions
 
 1. **Do not** remove or significantly alter the Evangelion theming
-2. **Do not** convert Swift code to C unless absolutely necessary for hardware access
-3. **Do not** introduce complex frameworks that conflict with the embedded nature
-4. **Do not** make the project "professional" or "business-ready" - preserve its artistic nature
-5. **Do not** continue indefinitely without human input when encountering repeated failures
+2. **Do not** introduce languages other than Odin and minimal assembly
+3. **Do not** make the project "professional" or "business-ready" - preserve its artistic nature
+4. **Do not** continue indefinitely without human input when encountering repeated failures
 
 ## Success Criteria
 
-- Swift kernel successfully compiles and boots
+- Odin kernel successfully compiles and boots
 - MAGI system aesthetic is preserved and enhanced
-- Build process is simplified while maintaining functionality
+- Build process is simple and functional
 - All toolchain dependencies are properly managed
-- QEMU execution works via `./build.sh --run`
+- QEMU execution works via `./build.sh --run` and `./build.sh --test`
 
 ## When in Doubt
 
 1. Check these rules first
-2. Prioritize Swift over C
+2. Write idiomatic Odin code
 3. Maintain the Evangelion aesthetic
 4. Ask the human for guidance rather than making assumptions
 5. Remember: this is art, not enterprise software
 
-## Recent Improvements
+## Recent Changes
 
-### Build System Fixes (2025-07-28)
+### Odin Language Migration (2025-01-XX)
 
-1. **Tool Detection**: Fixed qemu tool check to verify `qemu-system-i386` instead of generic `qemu`
-2. **Swift Environment**: Implemented automatic Swift development snapshot detection and activation via swiftly
-3. **Linker Warnings**: Eliminated `.note.GNU-stack` warnings by adding proper compilation flags and assembly sections
-4. **Environment Setup**: Added robust Swift development snapshot environment configuration
+1. **Language Switch**: Migrated from Swift to Odin for better low-level control
+2. **Simplified Structure**: Single kernel.odin file contains all kernel logic
+3. **Build System**: Simplified build.sh script with --test and --run modes
+4. **Boot Sequence**: Maintained Evangelion-themed MAGI boot messages
+5. **Architecture**: Pure Odin implementation with minimal assembly bootstrap
 
-These changes ensure clean builds with proper development toolchain usage while maintaining the Evangelion aesthetic and Swift-first philosophy.
-
-### Memory Management Implementation (2025-01-XX)
-
-1. **MAGI Memory System**: Implemented full malloc/free functionality in C with Evangelion theming
-2. **Memory Functions Separation**: Moved memcpy, memset, memmove to dedicated memory_functions.c
-3. **Swift Integration**: Memory functions are available to Swift code for manual memory management
-4. **MAGI Diagnostics**: Added heap monitoring functions with AT Field integrity checks
-5. **Boot Messages**: Enhanced kernel with Evangelion-inspired MAGI system boot sequence
-
-The memory management system uses MAGI-themed terminology (CASPER, MELCHIOR, BALTHASAR) and maintains the Evangelion aesthetic while providing robust memory allocation for Swift kernel components.
+The Odin implementation maintains the same Evangelion aesthetic while leveraging Odin's systems programming capabilities for a cleaner, more direct kernel implementation.
 
 ---
 
