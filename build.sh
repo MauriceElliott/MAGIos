@@ -24,6 +24,10 @@ SWIFT_SRCDIR="$SWERNEL_SRCDIR"
 KERNEL_BINARY="$BUILDDIR/kernel.bin"
 ISO_FILE="magios.iso"
 
+# BUILD_CONFIG_FILES
+LINKER_SCRIPT="$SRCDIR/linker.ld"
+GRUB_CONFIG="$SRCDIR/grub.cfg"
+
 MAGI_CASPER="CASPER"
 MAGI_MELCHIOR="MELCHIOR"
 MAGI_BALTHASAR="BALTHASAR"
@@ -170,7 +174,7 @@ main() {
 main "$@"
 
 #
-# === BUILD_SCRIPT_DOCUMENTATION ===
+# BUILD_SCRIPT_DOCUMENTATION ===
 #
 # BUILD_CONFIGURATION:
 # Sets up the toolchain environment for cross-compilation
@@ -185,6 +189,10 @@ main "$@"
 # SWERNEL_SRCDIR: Swift kernel (swernel) source location
 # SUPPORT_SRCDIR: Support library location
 # Legacy compatibility maintained for gradual migration
+#
+# BUILD_CONFIG_FILES:
+# LINKER_SCRIPT: Memory layout specification (linker.ld)
+# GRUB_CONFIG: GRUB bootloader configuration (grub.cfg)
 #
 # COLOR_CODES:
 # ANSI color codes for styled terminal output

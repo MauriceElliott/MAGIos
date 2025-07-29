@@ -13,7 +13,7 @@ TARGET_BITS = 32
 # COMPILATION_FLAGS
 ASMFLAGS = -f elf32
 CFLAGS = -m32 -ffreestanding -fno-stack-protector -fno-builtin -nostdlib -Wall -Wextra -std=c99
-LDFLAGS = -m elf_i386 -T linker.ld
+LDFLAGS = -m elf_i386 -T $(LINKER_SCRIPT)
 SWIFTFLAGS = -enable-experimental-feature Embedded -target $(TARGET_ARCH) -Xfrontend -disable-objc-interop -Xfrontend -function-sections -parse-stdlib -module-name SwiftKernel -wmo -c -emit-object
 
 # DIRECTORY_PATHS
@@ -24,6 +24,10 @@ SUPPORT_SRCDIR = $(SRCDIR)/support
 BUILDDIR = build
 ISODIR = iso
 SWIFT_SRCDIR = $(SWERNEL_SRCDIR)
+
+# BUILD_CONFIG_FILES
+LINKER_SCRIPT = $(SRCDIR)/linker.ld
+GRUB_CONFIG = $(SRCDIR)/grub.cfg
 
 # QEMU_CONFIG
 QEMU_SYSTEM = qemu-system-i386
@@ -143,7 +147,7 @@ ifeq ($(SHOW_PROGRESS),true)
 endif
 	@mkdir -p $(ISODIR)/boot/grub
 	@cp $(KERNEL_BINARY) $(ISODIR)/boot/
-	@cp grub.cfg $(ISODIR)/boot/grub/
+	@cp $(GRUB_CONFIG) $(ISODIR)/boot/grub/
 	@if command -v i686-elf-grub-mkrescue >/dev/null 2>&1; then \
 		i686-elf-grub-mkrescue -o $(ISO_FILE) $(ISODIR) 2>/dev/null; \
 	elif command -v grub-mkrescue >/dev/null 2>&1; then \
@@ -260,6 +264,10 @@ rebuild: clean all
 # KERNEL_SRCDIR: C kernel source location
 # SWERNEL_SRCDIR: Swift kernel (swernel) source location
 # SUPPORT_SRCDIR: Support library location
+#
+# BUILD_CONFIG_FILES:
+# LINKER_SCRIPT: Memory layout specification (linker.ld)
+# GRUB_CONFIG: GRUB bootloader configuration (grub.cfg)
 #
 # MAGI_SYSTEM_NAMES:
 # Evangelion-themed component names for build output

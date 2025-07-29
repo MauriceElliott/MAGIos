@@ -70,6 +70,8 @@ MAGI SYSTEM STARTUP SEQUENCE INITIATED
 MAGIos/
 ├── src/
 │   ├── boot.s                    # x86 assembly bootloader
+│   ├── grub.cfg                  # GRUB bootloader configuration
+│   ├── linker.ld                 # Memory layout specification
 │   ├── kernel/
 │   │   ├── kernel.c              # C bootstrap & hardware init
 │   │   └── include/
@@ -81,8 +83,7 @@ MAGIos/
 │       └── swtdlib/              # Swift standard library extensions
 ├── build.sh                      # Automated build script
 ├── Makefile                      # Build system (with centralized paths)
-├── LLM_RULES.md                  # Guidelines for AI assistance
-└── linker.ld                     # Memory layout specification
+└── LLM_RULES.md                  # Guidelines for AI assistance
 ```
 
 ### Development Commands

@@ -10,6 +10,8 @@
 #define SWIFT_KERNEL_PATH "src/swernel/swernel.swift"
 #define C_KERNEL_PATH "src/kernel/kernel.c"
 #define BOOT_ASM_PATH "src/boot.s"
+#define LINKER_SCRIPT_PATH "src/linker.ld"
+#define GRUB_CONFIG_PATH "src/grub.cfg"
 #define SUPPORT_CSTDLIB_PATH "src/support/cstdlib/"
 #define SUPPORT_SWTDLIB_PATH "src/support/swtdlib/"
 
@@ -86,6 +88,8 @@ void swift_kernel_init(const boot_info_t *boot_info);
  * Current MAGIos directory layout:
  * src/
  * ├── boot.s                    # x86 assembly bootloader
+ * ├── grub.cfg                  # GRUB bootloader configuration
+ * ├── linker.ld                 # Memory layout specification
  * ├── kernel/
  * │   ├── kernel.c              # C bootstrap & hardware init
  * │   └── include/
