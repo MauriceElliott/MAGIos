@@ -1,14 +1,14 @@
 /*
- * MAGIos Kernel Bridge Header
- * See KERNEL_BRIDGE_DOCUMENTATION at bottom for detailed documentation
+ * MAGIos Cernel Bridge Header
+ * See CERNEL_BRIDGE_DOCUMENTATION at bottom for detailed documentation
  */
 
-#ifndef KERNEL_BRIDGE_H
-#define KERNEL_BRIDGE_H
+#ifndef CERNEL_BRIDGE_H
+#define CERNEL_BRIDGE_H
 
-#define KERNEL_BRIDGE_PATH "src/kernel/include/kernel_bridge.h"
+#define CERNEL_BRIDGE_PATH "src/cernel/include/cernel_bridge.h"
 #define SWIFT_KERNEL_PATH "src/swernel/swernel.swift"
-#define C_KERNEL_PATH "src/kernel/kernel.c"
+#define C_CERNEL_PATH "src/cernel/cernel.c"
 #define BOOT_ASM_PATH "src/boot.s"
 #define LINKER_SCRIPT_PATH "src/linker.ld"
 #define GRUB_CONFIG_PATH "src/grub.cfg"
@@ -89,10 +89,10 @@ typedef struct {
 
 void swift_kernel_init(const boot_info_t *boot_info);
 
-#endif /* KERNEL_BRIDGE_H */
+#endif /* CERNEL_BRIDGE_H */
 
 /*
- * === KERNEL_BRIDGE_DOCUMENTATION ===
+ * === CERNEL_BRIDGE_DOCUMENTATION ===
  *
  * PROJECT_STRUCTURE:
  * Current MAGIos directory layout:
@@ -100,10 +100,10 @@ void swift_kernel_init(const boot_info_t *boot_info);
  * ├── boot.s                    # x86 assembly bootloader
  * ├── grub.cfg                  # GRUB bootloader configuration
  * ├── linker.ld                 # Memory layout specification
- * ├── kernel/
- * │   ├── kernel.c              # C bootstrap & hardware init
+ * ├── cernel/
+ * │   ├── cernel.c              # C bootstrap & hardware init
  * │   └── include/
- * │       └── kernel_bridge.h   # This file - C/Swift interoperability
+ * │       └── cernel_bridge.h   # This file - C/Swift interoperability
  * ├── swernel/
  * │   └── swernel.swift         # Swift kernel (MAGI system core)
  * └── support/
@@ -151,7 +151,7 @@ void swift_kernel_init(const boot_info_t *boot_info);
  * USAGE_NOTES:
  *
  * From C code:
- *   #include "kernel_bridge.h"
+ *   #include "cernel_bridge.h"
  *   swift_kernel_main();  // Call Swift kernel
  *
  * From Swift code:

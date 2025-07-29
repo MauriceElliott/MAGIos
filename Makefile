@@ -26,7 +26,7 @@ LDFLAGS = -m elf_i386 -T $(LINKER_SCRIPT)
 
 # DIRECTORY_PATHS
 SRCDIR = Sources
-KERNEL_SRCDIR = $(SRCDIR)/kernel
+CERNEL_SRCDIR = $(SRCDIR)/cernel
 SWERNEL_SRCDIR = $(SRCDIR)/swernel
 SUPPORT_SRCDIR = $(SRCDIR)/support
 BUILDDIR = build
@@ -63,15 +63,15 @@ USE_MAGI_THEMING = true
 
 # SOURCE_FILES
 ASM_SOURCES = $(wildcard $(SRCDIR)/*.s)
-C_SOURCES = $(wildcard $(KERNEL_SRCDIR)/*.c) $(wildcard $(SUPPORT_SRCDIR)/cstdlib/*.c)
+C_SOURCES = $(wildcard $(CERNEL_SRCDIR)/*.c) $(wildcard $(SUPPORT_SRCDIR)/cstdlib/*.c)
 SWIFT_SOURCES = $(wildcard $(SWERNEL_SRCDIR)/*.swift)
 
 ASM_OBJECTS = $(ASM_SOURCES:$(SRCDIR)/%.s=$(BUILDDIR)/%.o)
-C_KERNEL_OBJECTS = $(wildcard $(KERNEL_SRCDIR)/*.c)
-C_KERNEL_OBJECTS := $(C_KERNEL_OBJECTS:$(KERNEL_SRCDIR)/%.c=$(BUILDDIR)/%.o)
+C_CERNEL_OBJECTS = $(wildcard $(CERNEL_SRCDIR)/*.c)
+C_CERNEL_OBJECTS := $(C_CERNEL_OBJECTS:$(CERNEL_SRCDIR)/%.c=$(BUILDDIR)/%.o)
 C_SUPPORT_OBJECTS = $(wildcard $(SUPPORT_SRCDIR)/cstdlib/*.c)
 C_SUPPORT_OBJECTS := $(C_SUPPORT_OBJECTS:$(SUPPORT_SRCDIR)/cstdlib/%.c=$(BUILDDIR)/%.o)
-C_OBJECTS = $(C_KERNEL_OBJECTS) $(C_SUPPORT_OBJECTS)
+C_OBJECTS = $(C_CERNEL_OBJECTS) $(C_SUPPORT_OBJECTS)
 SWIFT_OBJECT = $(BUILDDIR)/swift_kernel.o
 
 ALL_OBJECTS = $(ASM_OBJECTS) $(C_OBJECTS) $(SWIFT_OBJECT)
@@ -128,17 +128,17 @@ endif
 		$(SWIFT_SOURCES)
 
 # C_COMPILATION
-$(BUILDDIR)/%.o: $(KERNEL_SRCDIR)/%.c | $(BUILDDIR)
+$(BUILDDIR)/%.o: $(CERNEL_SRCDIR)/%.c | $(BUILDDIR)
 ifeq ($(SHOW_PROGRESS),true)
 	@echo "🔹 Compiling C bridge: $<"
 endif
-	@$(CC) $(CFLAGS) -I$(KERNEL_SRCDIR) -c $< -o $@
+	@$(CC) $(CFLAGS) -I$(CERNEL_SRCDIR) -c $< -o $@
 
 $(BUILDDIR)/%.o: $(SUPPORT_SRCDIR)/cstdlib/%.c | $(BUILDDIR)
 ifeq ($(SHOW_PROGRESS),true)
 	@echo "🔹 Compiling MAGI memory functions: $<"
 endif
-	@$(CC) $(CFLAGS) -I$(KERNEL_SRCDIR) -I$(SUPPORT_SRCDIR)/cstdlib -c $< -o $@
+	@$(CC) $(CFLAGS) -I$(CERNEL_SRCDIR) -I$(SUPPORT_SRCDIR)/cstdlib -c $< -o $@
 
 # ASSEMBLY_COMPILATION
 $(BUILDDIR)/%.o: $(SRCDIR)/%.s | $(BUILDDIR)
@@ -296,7 +296,7 @@ rebuild: clean all
 #
 # DIRECTORY_PATHS:
 # Centralized path configuration for easier maintenance
-# KERNEL_SRCDIR: C kernel source location
+# CERNEL_SRCDIR: C cernel source location
 # SWERNEL_SRCDIR: Swift kernel (swernel) source location
 # SUPPORT_SRCDIR: Support library location
 #
@@ -329,7 +329,7 @@ rebuild: clean all
 # Bypasses SwiftPM to avoid ELF/Mach-O object file format conflicts
 #
 # C_COMPILATION:
-# Compiles C kernel bridge with include path configuration
+# Compiles C cernel bridge with include path configuration
 #
 # ASSEMBLY_COMPILATION:
 # Assembles bootloader code

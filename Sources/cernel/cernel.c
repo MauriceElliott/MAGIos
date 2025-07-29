@@ -1,15 +1,15 @@
 /*
- * MAGIos Kernel - Swift Integration Version
+ * MAGIos Cernel - Swift Integration Version
  * MAGI System Booting... Pattern Blue Detected
- * See KERNEL_ARCHITECTURE_NOTES at bottom for detailed documentation
+ * See CERNEL_ARCHITECTURE_NOTES at bottom for detailed documentation
  */
 
-#define KERNEL_BRIDGE_HEADER "include/kernel_bridge.h"
+#define CERNEL_BRIDGE_HEADER "include/cernel_bridge.h"
 #define SWIFT_KERNEL_DIR "../swernel/"
 
 #include <stddef.h>
 #include <stdint.h>
-#include KERNEL_BRIDGE_HEADER
+#include CERNEL_BRIDGE_HEADER
 #include "../support/cstdlib/memory_functions.h"
 
 // Forward declarations
@@ -197,7 +197,7 @@ void kernel_main(void) {
 }
 
 /*
- * === KERNEL_ARCHITECTURE_NOTES ===
+ * === CERNEL_ARCHITECTURE_NOTES ===
  *
  * MAGI_BOOT_SEQUENCE:
  * Displays Evangelion-inspired boot messages referencing the MAGI system
@@ -261,10 +261,10 @@ void kernel_main(void) {
  * BOOT_INFO_PROCESSING:
  * Extract and prepare boot information for Swift kernel.
  *
- * MAIN_KERNEL_ENTRY:
+ * MAIN_CERNEL_ENTRY:
  * CRITICAL: This is called from our assembly boot code.
  * Initializes Swift kernel which handles MAGI boot sequence, and coordinates
- * between C bootstrap and Swift kernel components.
+ * between C cernel bootstrap and Swift kernel components.
  *
  * INFINITE_HALT_LOOP:
  * CRITICAL: The kernel must never return from kernel_main.
@@ -304,6 +304,6 @@ void kernel_main(void) {
  * 5. Best of both worlds approach
  *
  * CALLING SEQUENCE:
- * boot.s -> kernel_main() -> initialize_swift_kernel() -> swift_kernel_main()
- *        -> [Swift does main work] -> return to C -> infinite halt loop
+ * boot.s -> kernel_main() -> initialize_swernel() -> swift_kernel_main()
+ *        -> [Swift does main work] -> return to cernel -> infinite halt loop
  */
