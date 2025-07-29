@@ -179,13 +179,12 @@ run_qemu() {
 # Test in QEMU (headless mode)
 test_qemu() {
     echo -e "${YELLOW}🧪 Testing MAGIos kernel in headless mode...${NC}"
-    echo -e "   ${CYAN}Terminal Dogma diagnostic sequence initiated${NC}"
-    echo -e "   ${PURPLE}Output will appear below (timeout: 15s)${NC}"
+    echo -e "   ${PURPLE}Output will appear below (timeout: 5s)${NC}"
     echo ""
     echo "========================================="
 
     # Run QEMU in headless mode with serial output
-    timeout 15s qemu-system-i386 \
+    timeout 5s qemu-system-i386 \
         -cdrom "$ISO_FILE" \
         -m 32M \
         -nographic \
@@ -213,11 +212,7 @@ build() {
 
 # Main Script
 main() {
-    echo "========================================="
     echo "MAGI SYSTEM STARTUP SEQUENCE INITIATED"
-    echo "Terminal Dogma Build System - Odin Version"
-    echo "========================================="
-    echo ""
 
     # Parse arguments
     case "$1" in
@@ -255,14 +250,10 @@ main() {
     fi
 
     echo ""
-    echo "========================================="
     echo -e "${GREEN}🎉 Terminal Dogma Operational!${NC}"
-    echo "========================================="
     echo ""
     echo "MAGIos 0.0.1 ready for deployment"
     echo "ISO: $ISO_FILE ($(ls -lh $ISO_FILE 2>/dev/null | awk '{print $5}' || echo 'Unknown size'))"
-    echo ""
-    echo -e "${CYAN}AT Field operational. Pattern Blue.${NC} 🤖"
     echo ""
     echo "Usage: ./build.sh [--clean|--test|--run]"
     echo ""
@@ -271,39 +262,3 @@ main() {
 
 # Run main function
 main "$@"
-
-# === BUILD SCRIPT DOCUMENTATION ===
-#
-# ODIN_COMPILATION:
-# The Odin compiler is used with freestanding target for kernel development
-# -target:linux_i386: Targets 32-bit x86 (using linux target as base)
-# -no-bounds-check: Disables bounds checking for arrays (not available in kernel)
-# -no-crt: No C runtime (we're in kernel space)
-# -no-thread-local: Disable thread-local storage (required with -no-crt)
-# -default-to-nil-allocator: No default memory allocator
-# -no-entry-point: We provide our own entry point in assembly
-# -o:speed: Optimize for speed
-# -build-mode:obj: Output object file instead of executable
-#
-# BUILD_PROCESS:
-# 1. Compile boot.s assembly file with NASM
-# 2. Compile cpu.s assembly helper functions with NASM
-# 3. Compile kernel.odin to object file
-# 4. Link all object files using linker script
-# 5. Create bootable ISO with GRUB
-#
-# QEMU_MODES:
-# --run: GUI mode with VGA display
-# --test: Headless mode with serial output (for automated testing)
-#
-# EVANGELION_THEMING:
-# MAGI system references throughout (CASPER, MELCHIOR, BALTHASAR)
-# Terminal Dogma and AT Field references
-# Color-coded output matching anime aesthetic
-#
-# TOOLCHAIN_REQUIREMENTS:
-# - Odin compiler (latest version)
-# - i686-elf cross-compiler toolchain
-# - NASM assembler
-# - QEMU emulator (specifically qemu-system-i386)
-# - GRUB tools (grub-mkrescue)
