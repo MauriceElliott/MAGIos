@@ -5,9 +5,7 @@
 import PackageDescription
 
 // PATH_CONSTANTS
-let swiftKernelPath = "src/swernel"
-let kernelPath = "src/kernel"
-let supportPath = "src/support"
+let swiftKernelPath = "Sources/"
 
 let package = Package(
     name: "MAGIos",
@@ -22,15 +20,20 @@ let package = Package(
         .target(
             name: "MAGIos",
             path: swiftKernelPath,
+            sources: ["swernel", "support"],
             swiftSettings: [
                 .enableExperimentalFeature("Embedded"),
                 .unsafeFlags([
                     "-target", "i686-unknown-none-elf",
                     "-Xfrontend", "-disable-objc-interop",
                     "-Xclang-linker", "-nostdlib",
+                    "-Xfrontend", "-function-sections",
+                    "-module-name", "SwiftKernel",
                     "-wmo",
+                    "-c",
+                    "-emit-object",
                 ]),
-            ]
+            ],
         )
     ]
 )

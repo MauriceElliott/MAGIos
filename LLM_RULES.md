@@ -9,8 +9,9 @@
 ### Language Priority
 
 1. **Swift First**: This project is Swift-first and foremost
-2. **C Where Necessary**: Use C only where Swift cannot be used (bootstrap, hardware initialization)
-3. **No Other Languages**: Avoid introducing additional languages unless absolutely critical
+2. **C Where Necessary**: Use C for bootstrap, hardware initialization, and critical memory management
+3. **Memory Management Exception**: Full C implementations are acceptable for malloc/free and related memory functions
+4. **No Other Languages**: Avoid introducing additional languages unless absolutely critical
 
 ### Aesthetic & Theme
 
@@ -37,7 +38,8 @@
 
 ### Code Changes
 
-- Prioritize Swift solutions over C solutions
+- Prioritize Swift solutions over C solutions (except for memory management)
+- Full C memory management implementations are encouraged for performance and compatibility
 - Maintain existing Evangelion theming in all modifications
 - Preserve the artistic nature of the project - don't over-optimize for practical use
 - Keep the 32-bit architecture constraint
@@ -111,6 +113,16 @@
 4. **Environment Setup**: Added robust Swift development snapshot environment configuration
 
 These changes ensure clean builds with proper development toolchain usage while maintaining the Evangelion aesthetic and Swift-first philosophy.
+
+### Memory Management Implementation (2025-01-XX)
+
+1. **MAGI Memory System**: Implemented full malloc/free functionality in C with Evangelion theming
+2. **Memory Functions Separation**: Moved memcpy, memset, memmove to dedicated memory_functions.c
+3. **Swift Integration**: Memory functions are available to Swift code for manual memory management
+4. **MAGI Diagnostics**: Added heap monitoring functions with AT Field integrity checks
+5. **Boot Messages**: Enhanced kernel with Evangelion-inspired MAGI system boot sequence
+
+The memory management system uses MAGI-themed terminology (CASPER, MELCHIOR, BALTHASAR) and maintains the Evangelion aesthetic while providing robust memory allocation for Swift kernel components.
 
 ---
 

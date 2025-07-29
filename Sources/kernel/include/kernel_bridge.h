@@ -18,6 +18,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// MAGI_MEMORY_FUNCTIONS
+void *malloc(size_t size);
+void free(void *ptr);
+void *memcpy(void *dest, const void *src, size_t n);
+void *memset(void *s, int c, size_t n);
+void *memmove(void *dest, const void *src, size_t n);
+
+// MAGI_DIAGNOSTICS
+size_t magi_heap_available(void);
+int magi_heap_check(void);
+
 // SWIFT_KERNEL_FUNCTIONS
 void swift_kernel_main(void);
 void swift_terminal_writestring(const char *data);
@@ -64,10 +75,6 @@ typedef enum {
 // MEMORY_LAYOUT
 #define KERNEL_BASE_ADDR 0x00100000
 #define KERNEL_STACK_SIZE 16384
-
-#ifdef DEBUG
-void debug_print(const char *message);
-#endif
 
 // BOOT_INFO_STRUCT
 typedef struct {
@@ -153,9 +160,18 @@ void swift_kernel_init(const boot_info_t *boot_info);
  * 2. Phase 2: Gradually replace C functions with Swift equivalents
  * 3. Phase 3: Full Swift kernel with minimal C bootstrap
  *
+ * MAGI_MEMORY_FUNCTIONS:
+ * Memory management functions implemented in memory_functions.c
+ * These provide full malloc/free functionality with MAGI heap management
+ * Available to both C and Swift code for dynamic memory allocation
+ *
+ * MAGI_DIAGNOSTICS:
+ * Memory diagnostic functions for monitoring heap health
+ * magi_heap_available: Returns available heap space
+ * magi_heap_check: Verifies heap integrity (AT Field status)
+ *
  * FUTURE_EXPANSION:
  * Reserved function declarations for future features:
  * - Interrupt handling (future)
- * - Memory management (future)
  * - Process management (future)
  */

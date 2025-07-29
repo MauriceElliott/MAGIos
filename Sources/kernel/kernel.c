@@ -1,5 +1,6 @@
 /*
  * MAGIos Kernel - Swift Integration Version
+ * MAGI System Booting... Pattern Blue Detected
  * See KERNEL_ARCHITECTURE_NOTES at bottom for detailed documentation
  */
 
@@ -9,26 +10,21 @@
 #include <stddef.h>
 #include <stdint.h>
 #include KERNEL_BRIDGE_HEADER
+#include "../support/cstdlib/memory_functions.h"
 
 // Forward declarations
 void terminal_putchar(char c);
+void terminal_setcolor(uint8_t color);
+void terminal_writestring(const char *data);
 
 // SWIFT_RUNTIME_STUBS
-void free(void *ptr) { (void)ptr; }
+// Note: malloc and free now implemented in memory_functions.c
 
 int posix_memalign(void **memptr, size_t alignment, size_t size) {
   (void)memptr;
   (void)alignment;
   (void)size;
-  return -1; // POSIX_MEMALIGN_ERROR
-}
-
-void *memset(void *s, int c, size_t n) {
-  unsigned char *p = (unsigned char *)s;
-  while (n--) {
-    *p++ = (unsigned char)c;
-  }
-  return s;
+  return -1; // POSIX_MEMALIGN_ERROR - Use MAGI malloc instead
 }
 
 void arc4random_buf(void *buf, size_t nbytes) { // ARC4_RANDOM_STUB
@@ -49,13 +45,30 @@ typedef struct multiboot_info {
   uint32_t mods_addr;
 } multiboot_info_t;
 
-// LEGACY_VGA_HELPERS
-static inline uint8_t vga_entry_color_c(vga_color_t fg, vga_color_t bg) {
-  return fg | bg << 4;
-}
+// MAGI_BOOT_SEQUENCE
+static void magi_boot_message(void) {
+  terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_CYAN, VGA_COLOR_BLACK));
+  terminal_writestring("MAGI SYSTEM INITIALIZATION\n");
+  terminal_writestring("==============================\n\n");
 
-static inline uint16_t vga_entry_c(unsigned char uc, uint8_t color) {
-  return (uint16_t)uc | (uint16_t)color << 8;
+  terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK));
+  terminal_writestring("CASPER: Online... Pattern Blue Detected\n");
+  terminal_writestring("MELCHIOR: Online... AT Field Nominal\n");
+  terminal_writestring("BALTHASAR: Online... Synchronization Rate: 100%\n\n");
+
+  terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK));
+  terminal_writestring("NERV OS Version 3.33 - You Can (Not) Redo\n");
+  terminal_writestring("All systems nominal. Angels detected: 0\n\n");
+
+  terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLACK));
+  terminal_writestring("Initializing Evangelion Unit-01...\n");
+  terminal_writestring("Pilot: Shinji Ikari\n");
+  terminal_writestring("Entry Plug insertion confirmed.\n\n");
+
+  terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_RED, VGA_COLOR_BLACK));
+  terminal_writestring("WARNING: Do not run away, Shinji!\n\n");
+
+  terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
 }
 
 // EMERGENCY_FALLBACK
@@ -109,21 +122,7 @@ int putchar(int c) {
   return c;
 }
 
-void *memmove(void *dest, const void *src, size_t n) {
-  unsigned char *d = (unsigned char *)dest;
-  const unsigned char *s = (const unsigned char *)src;
-
-  if (d < s) {
-    for (size_t i = 0; i < n; i++) {
-      d[i] = s[i];
-    }
-  } else if (d > s) {
-    for (size_t i = n; i > 0; i--) {
-      d[i - 1] = s[i - 1];
-    }
-  }
-  return dest;
-}
+// Note: memmove now implemented in memory_functions.c
 
 void terminal_putchar(char c) {
   if (c == '\n') {
@@ -154,58 +153,8 @@ void terminal_writestring(const char *data) {
   }
 }
 
-// CHARACTER_CONSTANTS_FOR_SWIFT
-char get_char_O(void) { return 'O'; }
-char get_char_K(void) { return 'K'; }
-char get_char_space(void) { return ' '; }
-char get_char_newline(void) { return '\n'; }
-char get_char_h(void) { return 'h'; }
-char get_char_e(void) { return 'e'; }
-char get_char_l(void) { return 'l'; }
-char get_char_o(void) { return 'o'; }
-char get_char_comma(void) { return ','; }
-char get_char_f(void) { return 'f'; }
-char get_char_r(void) { return 'r'; }
-char get_char_m(void) { return 'm'; }
-char get_char_s(void) { return 's'; }
-char get_char_w(void) { return 'w'; }
-char get_char_i(void) { return 'i'; }
-char get_char_t(void) { return 't'; }
-char get_char_exclamation(void) { return '!'; }
-
-uint8_t get_color_green(void) {
-  return VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
-}
-uint8_t get_color_cyan(void) {
-  return VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK);
-}
-uint8_t get_color_yellow(void) {
-  return VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK);
-}
-
-// SWIFT_WRAPPER_FUNCTIONS
-void swift_putchar_h(void) { terminal_putchar('h'); }
-void swift_putchar_e(void) { terminal_putchar('e'); }
-void swift_putchar_l(void) { terminal_putchar('l'); }
-void swift_putchar_o(void) { terminal_putchar('o'); }
-void swift_putchar_comma(void) { terminal_putchar(','); }
-void swift_putchar_space(void) { terminal_putchar(' '); }
-void swift_putchar_f(void) { terminal_putchar('f'); }
-void swift_putchar_r(void) { terminal_putchar('r'); }
-void swift_putchar_m(void) { terminal_putchar('m'); }
-void swift_putchar_s(void) { terminal_putchar('s'); }
-void swift_putchar_w(void) { terminal_putchar('w'); }
-void swift_putchar_i(void) { terminal_putchar('i'); }
-void swift_putchar_t(void) { terminal_putchar('t'); }
-void swift_putchar_exclamation(void) { terminal_putchar('!'); }
-void swift_putchar_newline(void) { terminal_putchar('\n'); }
-
-void swift_set_color_yellow(void) {
-  terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK));
-}
-
 // SWIFT_KERNEL_INIT
-static void initialize_swift_kernel(void) {
+static void initialize_swernel(void) {
   __asm__ volatile("" ::: "memory");
   swift_kernel_main();
   __asm__ volatile("" ::: "memory");
@@ -231,7 +180,18 @@ static boot_info_t process_multiboot_info(uint32_t magic,
 // MAIN_KERNEL_ENTRY
 void kernel_main(void) {
   __asm__ volatile("" ::: "memory");
-  initialize_swift_kernel();
+
+  // Display MAGI boot sequence
+  magi_boot_message();
+
+  // Initialize Swift kernel
+  initialize_swernel();
+
+  // Display final system status
+  terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_GREEN, VGA_COLOR_BLACK));
+  terminal_writestring("MAGI System fully operational.\n");
+  terminal_writestring("Awaiting Angel attack patterns...\n");
+
   __asm__ volatile("cli");
 
   while (1) {
@@ -239,61 +199,22 @@ void kernel_main(void) {
   }
 }
 
-// C_ONLY_FALLBACK
-void kernel_main_c_only(void) {
-  volatile uint16_t *terminal_buffer = (uint16_t *)VGA_MEMORY;
-  uint8_t color = VGA_ENTRY_COLOR(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK);
-
-  for (size_t y = 0; y < VGA_HEIGHT; y++) {
-    for (size_t x = 0; x < VGA_WIDTH; x++) {
-      const size_t index = y * VGA_WIDTH + x;
-      terminal_buffer[index] = VGA_ENTRY(' ', color);
-    }
-  }
-
-  const char *message = "MAGIos - C-only mode (Swift disabled)";
-  size_t row = 0;
-  size_t col = 0;
-
-  for (size_t i = 0; message[i] != '\0'; i++) {
-    if (message[i] == '\n') {
-      row++;
-      col = 0;
-      continue;
-    }
-
-    const size_t index = row * VGA_WIDTH + col;
-    terminal_buffer[index] = VGA_ENTRY(message[i], color);
-    col++;
-  }
-
-  while (1) {
-    __asm__ volatile("hlt");
-  }
-}
-
-#ifdef DEBUG
-void debug_print(const char *message) {
-  swift_terminal_setcolor(VGA_ENTRY_COLOR(VGA_COLOR_BROWN, VGA_COLOR_BLACK));
-  swift_terminal_writestring("[DEBUG] ");
-  swift_terminal_writestring(message);
-  swift_terminal_writestring("\n");
-}
-#endif
-
 /*
  * === KERNEL_ARCHITECTURE_NOTES ===
  *
+ * MAGI_BOOT_SEQUENCE:
+ * Displays Evangelion-inspired boot messages referencing the MAGI system
+ * (CASPER, MELCHIOR, BALTHASAR) and Evangelion Unit-01. Provides thematic
+ * continuity and establishes the Neon Genesis Evangelion aesthetic.
+ *
  * SWIFT_RUNTIME_STUBS:
  * Minimal implementations of standard library functions required by Swift
- * runtime. These provide basic functionality for the embedded Swift kernel
- * environment. free() - In a real kernel, this would free memory from a heap
- * allocator. For now, we ignore free calls since we don't have dynamic
- * allocation.
+ * runtime. Memory functions (malloc, free, memcpy, memset, memmove) are now
+ * implemented in memory_functions.c with full MAGI heap management.
  *
  * POSIX_MEMALIGN_ERROR:
- * Minimal memory allocation - for embedded Swift we avoid dynamic allocation.
- * Return error to force Swift to use stack allocation where possible.
+ * Minimal memory allocation - directs users to use MAGI malloc instead.
+ * Return error to force Swift to use MAGI memory management.
  *
  * ARC4_RANDOM_STUB:
  * Provide deterministic "random" data for embedded environment.
@@ -345,7 +266,8 @@ void debug_print(const char *message) {
  *
  * MAIN_KERNEL_ENTRY:
  * CRITICAL: This is called from our assembly boot code.
- * This function coordinates between C bootstrap and Swift kernel.
+ * Displays MAGI boot sequence, initializes Swift kernel, and coordinates
+ * between C bootstrap and Swift kernel components.
  *
  * INFINITE_HALT_LOOP:
  * CRITICAL: The kernel must never return from kernel_main.

@@ -23,10 +23,9 @@ TARGET_BITS = 32
 ASMFLAGS = -f elf32
 CFLAGS = -m32 -ffreestanding -fno-stack-protector -fno-builtin -nostdlib -Wall -Wextra -std=c99 -Wa,--noexecstack
 LDFLAGS = -m elf_i386 -T $(LINKER_SCRIPT)
-SWIFTFLAGS = -enable-experimental-feature Embedded -target $(TARGET_ARCH) -Xfrontend -disable-objc-interop -Xfrontend -function-sections -parse-stdlib -module-name SwiftKernel -wmo -c -emit-object
 
 # DIRECTORY_PATHS
-SRCDIR = src
+SRCDIR = Sources
 KERNEL_SRCDIR = $(SRCDIR)/kernel
 SWERNEL_SRCDIR = $(SRCDIR)/swernel
 SUPPORT_SRCDIR = $(SRCDIR)/support
@@ -64,11 +63,15 @@ USE_MAGI_THEMING = true
 
 # SOURCE_FILES
 ASM_SOURCES = $(wildcard $(SRCDIR)/*.s)
-C_SOURCES = $(wildcard $(KERNEL_SRCDIR)/*.c)
+C_SOURCES = $(wildcard $(KERNEL_SRCDIR)/*.c) $(wildcard $(SUPPORT_SRCDIR)/cstdlib/*.c)
 SWIFT_SOURCES = $(wildcard $(SWERNEL_SRCDIR)/*.swift)
 
 ASM_OBJECTS = $(ASM_SOURCES:$(SRCDIR)/%.s=$(BUILDDIR)/%.o)
-C_OBJECTS = $(C_SOURCES:$(KERNEL_SRCDIR)/%.c=$(BUILDDIR)/%.o)
+C_KERNEL_OBJECTS = $(wildcard $(KERNEL_SRCDIR)/*.c)
+C_KERNEL_OBJECTS := $(C_KERNEL_OBJECTS:$(KERNEL_SRCDIR)/%.c=$(BUILDDIR)/%.o)
+C_SUPPORT_OBJECTS = $(wildcard $(SUPPORT_SRCDIR)/cstdlib/*.c)
+C_SUPPORT_OBJECTS := $(C_SUPPORT_OBJECTS:$(SUPPORT_SRCDIR)/cstdlib/%.c=$(BUILDDIR)/%.o)
+C_OBJECTS = $(C_KERNEL_OBJECTS) $(C_SUPPORT_OBJECTS)
 SWIFT_OBJECT = $(BUILDDIR)/swift_kernel.o
 
 ALL_OBJECTS = $(ASM_OBJECTS) $(C_OBJECTS) $(SWIFT_OBJECT)
@@ -114,7 +117,15 @@ $(SWIFT_OBJECT): $(SWIFT_SOURCES) | $(BUILDDIR)
 ifeq ($(SHOW_PROGRESS),true)
 	@echo "🔹 Compiling Swift kernel components..."
 endif
-	@swiftc $(SWIFTFLAGS) $(SWIFT_SOURCES) -o $@
+	@$(SWIFT) -enable-experimental-feature Embedded \
+		-target $(TARGET_ARCH) \
+		-Xfrontend -disable-objc-interop \
+		-Xfrontend -function-sections \
+		-module-name SwiftKernel \
+		-wmo \
+		-c \
+		-o $(SWIFT_OBJECT) \
+		$(SWIFT_SOURCES)
 
 # C_COMPILATION
 $(BUILDDIR)/%.o: $(KERNEL_SRCDIR)/%.c | $(BUILDDIR)
@@ -122,6 +133,12 @@ ifeq ($(SHOW_PROGRESS),true)
 	@echo "🔹 Compiling C bridge: $<"
 endif
 	@$(CC) $(CFLAGS) -I$(KERNEL_SRCDIR) -c $< -o $@
+
+$(BUILDDIR)/%.o: $(SUPPORT_SRCDIR)/cstdlib/%.c | $(BUILDDIR)
+ifeq ($(SHOW_PROGRESS),true)
+	@echo "🔹 Compiling MAGI memory functions: $<"
+endif
+	@$(CC) $(CFLAGS) -I$(KERNEL_SRCDIR) -I$(SUPPORT_SRCDIR)/cstdlib -c $< -o $@
 
 # ASSEMBLY_COMPILATION
 $(BUILDDIR)/%.o: $(SRCDIR)/%.s | $(BUILDDIR)
@@ -146,8 +163,7 @@ swift-check:
 	@echo "🔍 Checking Swift syntax..."
 	@swiftc -typecheck $(SWIFT_SOURCES) \
 		-enable-experimental-feature Embedded \
-		-target $(TARGET_ARCH) \
-		-parse-stdlib
+		-target $(TARGET_ARCH)
 	@echo "✅ Swift syntax check passed"
 
 # ISO_CREATION
@@ -269,6 +285,7 @@ rebuild: clean all
 #
 # TOOLCHAIN_CONFIGURATION:
 # export TOOLCHAINS=org.swift.62202505141a - Specific Swift toolchain version
+# SWIFT: Uses swiftc directly instead of SwiftPM for embedded compilation
 # Target architecture and compilation settings for embedded Swift kernel
 #
 # COMPILATION_FLAGS:
@@ -307,7 +324,9 @@ rebuild: clean all
 # Checks for required build tools before compilation
 #
 # SWIFT_COMPILATION:
-# Compiles Swift kernel components with embedded flags
+# Compiles Swift kernel components directly with swiftc (not SwiftPM)
+# Uses embedded Swift flags for bare-metal kernel environment
+# Bypasses SwiftPM to avoid ELF/Mach-O object file format conflicts
 #
 # C_COMPILATION:
 # Compiles C kernel bridge with include path configuration

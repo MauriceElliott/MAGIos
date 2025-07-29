@@ -30,7 +30,7 @@ SWIFT="swiftc"
 TARGET_ARCH="i686-unknown-none-elf"
 
 # PATH_CONFIGURATION
-SRCDIR="src"
+SRCDIR="Sources"
 KERNEL_SRCDIR="$SRCDIR/kernel"
 SWERNEL_SRCDIR="$SRCDIR/swernel"
 SUPPORT_SRCDIR="$SRCDIR/support"
