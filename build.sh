@@ -18,9 +18,10 @@ KERNEL_BINARY="$BUILDDIR/kernel.bin"
 ISO_FILE="magios.iso"
 
 # Build Files
-BOOT_ASM="$SRCDIR/boot.s"
-CPU_ASM="$SRCDIR/cpu.s"
-KERNEL_ODIN="$SRCDIR/kernel.odin"
+BOOT_ASM="$SRCDIR/core/boot.s"
+CPU_ASM="$SRCDIR/core/cpu.s"
+INTERRUPTS_ASM="$SRCDIR/core/interrupts.s"
+KERNEL_ODIN="$SRCDIR/core/kernel.odin"
 LINKER_SCRIPT="$SRCDIR/linker.ld"
 GRUB_CONFIG="$SRCDIR/grub.cfg"
 
@@ -98,13 +99,20 @@ compile_cpu() {
     echo -e "${GREEN}✅ CPU assembly compiled${NC}"
 }
 
+# Compile Interrupts Assembly
+compile_interrupts() {
+    echo -e "${BLUE}📦 Compiling interrupts assembly...${NC}"
+    $ASM -f elf32 "$INTERRUPTS_ASM" -o "$BUILDDIR/interrupts.o"
+    echo -e "${GREEN}✅ Interrupts assembly compiled${NC}"
+}
+
 # Compile Odin Kernel
 compile_kernel() {
-    echo -e "${PURPLE}🔨 Compiling Odin kernel...${NC}"
+    echo -e "${PURPLE}🔨 Compiling Odin kernel package...${NC}"
 
-    # Compile Odin to object file
+    # Compile entire Odin package to object file
     # Using linux_i386 target as base for freestanding kernel
-    $ODIN build "$KERNEL_ODIN" -file \
+    $ODIN build "$SRCDIR/core" \
         -out:"$BUILDDIR/kernel_odin.o" \
         -target:linux_i386 \
         -no-bounds-check \
@@ -116,7 +124,7 @@ compile_kernel() {
         -o:speed \
         -build-mode:obj
 
-    echo -e "${GREEN}✅ Odin kernel compiled${NC}"
+    echo -e "${GREEN}✅ Odin kernel package compiled${NC}"
 }
 
 # Link Kernel
@@ -128,6 +136,7 @@ link_kernel() {
         -o "$KERNEL_BINARY" \
         "$BUILDDIR/boot.o" \
         "$BUILDDIR/cpu.o" \
+        "$BUILDDIR/interrupts.o" \
         "$BUILDDIR/kernel_odin.o" \
         -nostdlib
 
@@ -203,6 +212,7 @@ build() {
     create_directories
     compile_boot
     compile_cpu
+    compile_interrupts
     compile_kernel
     link_kernel
     create_iso

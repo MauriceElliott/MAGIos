@@ -1,4 +1,5 @@
-package kernel
+package core
+
 
 // VGA text mode constants
 VGA_WIDTH :: 80
@@ -191,7 +192,8 @@ kernel_main :: proc "c" (magic: u32, mbi_addr: u32) {
 
 	// Run MAGI boot sequence
 	magi_boot_sequence()
-
+	setup_idt()
+	cpu_enable_interrupts()
 	// Disable interrupts and halt forever
 	cpu_halt_forever()
 }

@@ -62,6 +62,20 @@ cpu_outb:
     ret
 .end:
 
+; Load Interrupt Descriptor Table
+; Parameter: pointer to IDT descriptor
+global lidt:function (lidt.end - lidt)
+lidt:
+    push ebp
+    mov ebp, esp
+
+    mov eax, [ebp + 8]  ; Get IDT descriptor pointer from stack
+    lidt [eax]          ; Load IDT
+
+    pop ebp
+    ret
+.end:
+
 ; GNU-STACK SECTION
 ; This section marks the stack as non-executable to satisfy GNU ld requirements
 section .note.GNU-stack noalloc noexec nowrite progbits
