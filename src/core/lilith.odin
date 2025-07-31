@@ -58,6 +58,12 @@ IDT :: struct {
 	idt_ptr: IDT_PTR,
 }
 
+idt_instance: IDT
+
+// 0-31 interrupts are reserved for CPU exceptions
+// 32 is for a timer interrupt
+// 33 is for a keyboard interrupt
+// 34-255 interrupts are reserved for device interrupts, but are not yet used
 setup_idt :: proc() {
 	idt_set_gate(0, cast(u32)cast(uintptr)cast(rawptr)isr_stub_0, 0x08, 0x8E)
 	idt_set_gate(1, cast(u32)cast(uintptr)cast(rawptr)isr_stub_1, 0x08, 0x8E)
@@ -96,11 +102,12 @@ setup_idt :: proc() {
 
 	idt_instance.idt_ptr.limit = u16(size_of(idt_instance.entries) - 1)
 	idt_instance.idt_ptr.base = cast(u32)cast(uintptr)&idt_instance.entries
+
+	// Load Interrupt Descriptor Table
 	lidt(&idt_instance.idt_ptr)
 }
 
-idt_instance: IDT
-
+//add interrupt entry to the IDT
 idt_set_gate :: proc(num: int, base: u32, sel: u16, flags: u8) {
 	idt_instance.entries[num].offset_low = u16(base & 0xFFFF)
 	idt_instance.entries[num].selector = sel
@@ -110,6 +117,7 @@ idt_set_gate :: proc(num: int, base: u32, sel: u16, flags: u8) {
 }
 
 @(export)
+//Remember to add the proc "c" bit so this becomes available not only in c but also in assembly
 terminal_dispatch :: proc "c" (interrupt_number: int) {
 	context = {}
 	switch interrupt_number {

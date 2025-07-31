@@ -116,40 +116,21 @@ magi_boot_sequence :: proc() {
 	terminal_clear()
 
 	// MAGI System header
-	terminal_setcolor(vga_entry_color(VGA_COLOR_CYAN, VGA_COLOR_BLACK))
-	terminal_write("MAGI SYSTEM INITIALIZATION\n")
-	terminal_write("==============================\n\n")
+	terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK))
+	terminal_write("MAGIos Boot Sequence Initiated.\n")
+	terminal_write("-------------------------------\n\n")
 
 	// MAGI subsystems status
 	terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK))
-	terminal_write("CASPER: Online... Pattern Blue Detected\n")
-	terminal_write("MELCHIOR: Online... AT Field Nominal\n")
-	terminal_write("BALTHASAR: Online... Synchronization Rate: 100%\n\n")
-
-	// NERV OS version
-	terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK))
-	terminal_write("NERV OS Version 3.33 - You Can (Not) Redo\n")
-	terminal_write("All systems nominal. Angels detected: 0\n\n")
-
-	// Eva Unit-01 status
-	terminal_setcolor(vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK))
-	terminal_write("Initializing Evangelion Unit-01...\n")
-	terminal_write("Pilot: Shinji Ikari\n")
-	terminal_write("Entry Plug insertion confirmed.\n\n")
-
-	// Warning message
-	terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_RED, VGA_COLOR_BLACK))
-	terminal_write("WARNING: Do not run away, Shinji!\n\n")
-
-	// Odin-specific status
-	terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_MAGENTA, VGA_COLOR_BLACK))
-	terminal_write("Odin kernel synchronized with MAGI.\n")
-	terminal_write("Pattern Blue confirmed. Evangelion Unit-01 ready.\n\n")
+	terminal_write("CASPER-1 Online...\n")
+	terminal_write("MELCHIOR-2 Online...\n")
+	terminal_write("BALTHASAR-3 Online...\n\n")
 
 	// Final status
 	terminal_setcolor(vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK))
-	terminal_write("MAGI System fully operational.\n")
-	terminal_write("Awaiting Angel attack patterns...\n")
+	terminal_write("MAGI System nominal.\n")
+	terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_RED, VGA_COLOR_BLACK))
+	terminal_write("God is in his heaven, all is right with the world.\n")
 
 	// Reset to default color
 	terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK))
@@ -185,15 +166,17 @@ kernel_panic :: proc(message: string) {
 kernel_main :: proc "c" (magic: u32, mbi_addr: u32) {
 	context = {}
 
-	// Verify multiboot magic number
 	if magic != 0x2BADB002 {
 		kernel_panic("Invalid multiboot magic number!")
 	}
 
-	// Run MAGI boot sequence
+	// Run boot sequence
 	magi_boot_sequence()
+
+	// Initialize Terminal Dispatch
 	setup_idt()
 	cpu_enable_interrupts()
+
 	// Disable interrupts and halt forever
 	cpu_halt_forever()
 }
