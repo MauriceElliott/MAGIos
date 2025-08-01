@@ -8,7 +8,7 @@ A 32-bit operating system kernel written in Odin, inspired by the aesthetics and
 
 MAGIos is experimental. It is a conduit for me to learn how an OS works as well as giving me an outlet for creativity.
 
-I have chosen Odin for this project as out of the choices, it filled me with the least sadness over leaving my beloved swift behind.
+I have chosen Odin for this project as out of the choices, it filled me with the least sadness over leaving my beloved swift behind. Although so far its been a glorious choice and will most likely be my chosen language for everything going forward.
 
 I do not know if I will ever make it to GUI applications, currently I am only looking at making this work as a terminal type application, possibly something that could run under something similar to WSL on Windows, but we will see.
 
