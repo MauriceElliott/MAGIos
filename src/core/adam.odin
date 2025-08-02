@@ -111,7 +111,7 @@ terminal_clear :: proc() {
 }
 
 // MAGI boot sequence display
-magi_boot_sequence :: proc() {
+boot_sequence :: proc() {
 	// Clear screen first
 	terminal_clear()
 
@@ -171,7 +171,7 @@ kernel_main :: proc "c" (magic: u32, mbi_addr: u32) {
 	}
 
 	// Run boot sequence
-	magi_boot_sequence()
+	boot_sequence()
 
 	// Initialize Terminal Dispatch
 	setup_idt()
@@ -195,7 +195,7 @@ kernel_main :: proc "c" (magic: u32, mbi_addr: u32) {
  * terminal_write: Output string
  * terminal_clear: Clear screen
  *
- * MAGI_BOOT_SEQUENCE:
+ * BOOT_SEQUENCE:
  * Displays Evangelion-inspired boot messages
  * References MAGI system (CASPER, MELCHIOR, BALTHASAR)
  * Maintains consistent theming throughout boot
@@ -209,11 +209,5 @@ kernel_main :: proc "c" (magic: u32, mbi_addr: u32) {
  * Uses Odin's built-in types (u8, u16, u32)
  * C calling convention for kernel_main
  * Direct memory access via pointers
- * Inline assembly for CPU instructions
- *
- * EVANGELION_THEMING:
- * NERV OS 3.33 version reference
- * Pattern Blue (Angel detection)
- * AT Field references
- * Pilot synchronization themes
+ * Inline assembly for CPU functions
  */
