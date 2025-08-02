@@ -196,8 +196,8 @@ terminal_dispatch :: proc "c" (interrupt_number: int) {
 }
 
 sync_keyboard :: proc() {
-	scancode := cpu_inb(0x60)
+	// scancode := cpu_inb(0x60)
 
-	terminal_setcolor(vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK))
-	terminal_write(eliquence.stringify(scancode))
+	// terminal_setcolor(vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK))
+	// terminal_write(eliquence.stringify(scancode))
 }
