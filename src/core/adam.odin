@@ -195,11 +195,6 @@ kernel_main :: proc "c" (magic: u32, mbi_addr: u32) {
  * terminal_write: Output string
  * terminal_clear: Clear screen
  *
- * BOOT_SEQUENCE:
- * Displays Evangelion-inspired boot messages
- * References MAGI system (CASPER, MELCHIOR, BALTHASAR)
- * Maintains consistent theming throughout boot
- *
  * KERNEL_ENTRY:
  * kernel_main: Called from assembly bootstrap
  * Receives multiboot magic and info structure
