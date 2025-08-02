@@ -177,7 +177,12 @@ kernel_main :: proc "c" (magic: u32, mbi_addr: u32) {
 	cpu_enable_interrupts()
 
 	terminal_write("INTERRUPTS ENABLED.\n")
-	crash()
+	terminal_write("Waiting for keyboard input...\n")
+
+	// Keep kernel running to receive keyboard interrupts
+	for {
+		cpu_halt() // Halt until interrupt, then continue loop
+	}
 }
 
 /*

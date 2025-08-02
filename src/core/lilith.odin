@@ -105,7 +105,29 @@ setup_idt :: proc() {
 	idt_instance.idt_ptr.limit = u16(size_of(idt_instance.entries) - 1)
 	idt_instance.idt_ptr.base = cast(u32)cast(uintptr)&idt_instance.entries
 
+	// Load Interrupt Descriptor Table first
+	lidt(&idt_instance.idt_ptr)
+	terminal_write("IDT LOADED.\n")
 
+	// Initialize PIC
+	init_pic()
+	terminal_write("PIC INITIALIZED.\n")
+
+	// Initialize keyboard controller
+	init_keyboard()
+	terminal_write("KEYBOARD INITIALIZED.\n")
+}
+
+//add interrupt entry to the IDT
+idt_set_gate :: proc(num: int, base: u32, sel: u16, flags: u8) {
+	idt_instance.entries[num].offset_low = u16(base & 0xFFFF)
+	idt_instance.entries[num].selector = sel
+	idt_instance.entries[num].zero = 0
+	idt_instance.entries[num].type_attr = flags
+	idt_instance.entries[num].offset_high = u16((base >> 16) & 0xFFFF)
+}
+
+init_pic :: proc() {
 	// ICW1: Initialize PIC
 	cpu_outb(0x20, 0x11) // Master PIC command
 	cpu_outb(0xA0, 0x11) // Slave PIC command
@@ -125,19 +147,34 @@ setup_idt :: proc() {
 	// Unmask keyboard interrupt (IRQ 1)
 	cpu_outb(0x21, 0xFD) // Enable only keyboard interrupt
 	cpu_outb(0xA1, 0xFF) // Disable all slave PIC interrupts
-
-	terminal_write("IDT ENABLED.\n")
-	// Load Interrupt Descriptor Table
-	lidt(&idt_instance.idt_ptr)
 }
 
-//add interrupt entry to the IDT
-idt_set_gate :: proc(num: int, base: u32, sel: u16, flags: u8) {
-	idt_instance.entries[num].offset_low = u16(base & 0xFFFF)
-	idt_instance.entries[num].selector = sel
-	idt_instance.entries[num].zero = 0
-	idt_instance.entries[num].type_attr = flags
-	idt_instance.entries[num].offset_high = u16((base >> 16) & 0xFFFF)
+init_keyboard :: proc() {
+	// Clear keyboard buffer
+	terminal_write("DEBUG1: Clearing keyboard buffer...\n")
+	for {
+		status := cpu_inb(0x64)
+		if (status & 0x01) == 0 do break // No data available
+		cpu_inb(0x60) // Read and discard
+	}
+	terminal_write("DEBUG2: Buffer cleared.\n")
+
+	// Enable keyboard
+	terminal_write("DEBUG3: Enabling keyboard...\n")
+	for {
+		status := cpu_inb(0x64)
+		if (status & 0x02) == 0 do break // Input buffer empty
+	}
+	cpu_outb(0x64, 0xAE) // Enable keyboard command
+	terminal_write("DEBUG4: Keyboard enabled.\n")
+
+	// Simple test: read keyboard status
+	status := cpu_inb(0x64)
+	terminal_write("DEBUG5: Keyboard status after enable: ")
+	terminal_write(eliquence.stringify(status))
+	terminal_write("\n")
+
+	terminal_write("DEBUG6: Keyboard initialization complete.\n")
 }
 
 @(export)
@@ -161,7 +198,6 @@ terminal_dispatch :: proc "c" (interrupt_number: int) {
 sync_keyboard :: proc() {
 	scancode := cpu_inb(0x60)
 
-	terminal_clear()
 	terminal_setcolor(vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK))
 	terminal_write(eliquence.stringify(scancode))
 }
