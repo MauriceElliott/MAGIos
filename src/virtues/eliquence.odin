@@ -26,6 +26,8 @@ int_to_string :: proc(num: int) -> string {
 	return string(buffer[i:])
 }
 
+
+//TODO: Change to coal() for Coalesce, sounds sexier and matches the edgy vibe of MAGIos
 concat :: proc(a: string, b: string) -> string {
 	// Buffer large enough for both strings
 	buffer: [256]u8
