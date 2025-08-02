@@ -10,7 +10,7 @@ MAGIos is experimental. It is a conduit for me to learn how an OS works as well 
 
 I have chosen Odin for this project as out of the choices, it filled me with the least sadness over leaving my beloved swift behind. Although so far its been a glorious choice and will most likely be my chosen language for everything going forward.
 
-I do not know if I will ever make it to GUI applications, currently I am only looking at making this work as a terminal type application, possibly something that could run under something similar to WSL on Windows, but we will see.
+Currently I am making this as a terminal type application, possibly something that could run under WSL on Windows. Eventually I would like to make a GUI library, something that fits the 90s anime theme. But the thing is this isn't just about the aesthetics of the externally facing application, this is also about the codebase, so as you can probably see, the kernel file being called adam, and the interrupt system being called lilith make this less than ideal as a learning device for others. Because of this, I have done my best to leave as many comments with as much details as is possible.
 
 ## Features
 
