@@ -76,6 +76,11 @@ lidt:
     ret
 .end:
 
+global crash:function (crash.end - crash)
+crash:
+    int 3
+.end:
+
 ; GNU-STACK SECTION
 ; This section marks the stack as non-executable to satisfy GNU ld requirements
 section .note.GNU-stack noalloc noexec nowrite progbits

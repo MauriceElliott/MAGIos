@@ -142,8 +142,7 @@ foreign _ {
 	cpu_enable_interrupts :: proc() ---
 	cpu_halt :: proc() ---
 	cpu_halt_forever :: proc() ---
-	cpu_inb :: proc(port: u16) -> u8 ---
-	cpu_outb :: proc(port: u16, value: u8) ---
+	crash :: proc() ---
 }
 
 // Kernel panic handler
@@ -158,7 +157,7 @@ kernel_panic :: proc(message: string) {
 	terminal_write(message)
 
 	// Halt forever
-	cpu_halt_forever()
+	// cpu_halt_forever()
 }
 
 // Main kernel entry point - called from boot.s
@@ -177,8 +176,8 @@ kernel_main :: proc "c" (magic: u32, mbi_addr: u32) {
 	setup_idt()
 	cpu_enable_interrupts()
 
-	// Disable interrupts and halt forever
-	cpu_halt_forever()
+	terminal_write("INTERRUPTS ENABLED.\n")
+	crash()
 }
 
 /*

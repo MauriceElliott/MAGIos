@@ -38,6 +38,8 @@ foreign _ {
 	isr_stub_32 :: proc() ---
 	isr_stub_33 :: proc() ---
 	lidt :: proc(ptr: rawptr) ---
+	cpu_inb :: proc(port: u16) -> u8 ---
+	cpu_outb :: proc(port: u16, value: u8) ---
 }
 
 IDTEntry :: struct {
@@ -103,6 +105,28 @@ setup_idt :: proc() {
 	idt_instance.idt_ptr.limit = u16(size_of(idt_instance.entries) - 1)
 	idt_instance.idt_ptr.base = cast(u32)cast(uintptr)&idt_instance.entries
 
+
+	// ICW1: Initialize PIC
+	cpu_outb(0x20, 0x11) // Master PIC command
+	cpu_outb(0xA0, 0x11) // Slave PIC command
+
+	// ICW2: Remap interrupts
+	cpu_outb(0x21, 0x20) // Master PIC starts at interrupt 32
+	cpu_outb(0xA1, 0x28) // Slave PIC starts at interrupt 40
+
+	// ICW3: Setup cascade
+	cpu_outb(0x21, 0x04) // Master PIC has slave at IRQ2
+	cpu_outb(0xA1, 0x02) // Slave PIC cascade identity
+
+	// ICW4: Environment info
+	cpu_outb(0x21, 0x01) // 8086 mode
+	cpu_outb(0xA1, 0x01) // 8086 mode
+
+	// Unmask keyboard interrupt (IRQ 1)
+	cpu_outb(0x21, 0xFD) // Enable only keyboard interrupt
+	cpu_outb(0xA1, 0xFF) // Disable all slave PIC interrupts
+
+	terminal_write("IDT ENABLED.\n")
 	// Load Interrupt Descriptor Table
 	lidt(&idt_instance.idt_ptr)
 }
@@ -120,19 +144,24 @@ idt_set_gate :: proc(num: int, base: u32, sel: u16, flags: u8) {
 //Remember to add the proc "c" bit so this becomes available not only in c but also in assembly
 terminal_dispatch :: proc "c" (interrupt_number: int) {
 	context = {}
+	terminal_write("ALL ABOARD TERMINAL DISPATCH!.\n")
+
 	switch interrupt_number {
 	case 33:
 		sync_keyboard()
 	case:
 		// Create the error message manually for now
 		terminal_write(
-			eliquence.concat("Unhandled interrupt\n", eliquence.int_to_string(interrupt_number)),
+			eliquence.coal("Unhandled interrupt\n", eliquence.stringify(interrupt_number)),
 		)
 		cpu_halt_forever()
 	}
 }
 
 sync_keyboard :: proc() {
-	// Read from keyboard port, decode, etc.
-	kernel_panic("HELLO!")
+	scancode := cpu_inb(0x60)
+
+	terminal_clear()
+	terminal_setcolor(vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK))
+	terminal_write(eliquence.stringify(scancode))
 }
