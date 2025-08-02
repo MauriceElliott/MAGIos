@@ -20,7 +20,7 @@ SECTIONS
     }
 
     /* Text section: executable code */
-    .text : ALIGN(4K)
+    .text : ALIGN(4K) /* ALIGN to the next 4kb block of memory. */
     {
         *(.text)        /* All code sections */
         *(.text.*)      /* All code subsections */
