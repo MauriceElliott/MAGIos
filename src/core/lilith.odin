@@ -1,6 +1,7 @@
 package core
 
 import eliquence "../virtues"
+import "base:runtime"
 
 foreign _ {
 	isr_stub_0 :: proc() ---
@@ -179,25 +180,21 @@ init_keyboard :: proc() {
 
 @(export)
 //Remember to add the proc "c" bit so this becomes available not only in c but also in assembly
-terminal_dispatch :: proc "c" (interrupt_number: int) {
-	context = {}
-	terminal_write("ALL ABOARD TERMINAL DISPATCH!.\n")
+terminal_dispatch :: proc "c" (interrupt_number: u32) {
+	context = runtime.default_context()
+	// terminal_write("ALL ABOARD TERMINAL DISPATCH!.\n")
 
 	switch interrupt_number {
 	case 33:
 		sync_keyboard()
 	case:
-		// Create the error message manually for now
-		terminal_write(
-			eliquence.coal("Unhandled interrupt\n", eliquence.stringify(interrupt_number)),
-		)
-		cpu_halt_forever()
+		cpu_halt()
 	}
 }
 
 sync_keyboard :: proc() {
 	scancode := cpu_inb(0x60)
 
-	terminal_setcolor(vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK))
-	terminal_write(eliquence.stringify(scancode))
+	// Acknowledge interrupt to PIC
+	cpu_outb(0x20, 0x20) // Send EOI (End of Interrupt) to master PIC
 }
