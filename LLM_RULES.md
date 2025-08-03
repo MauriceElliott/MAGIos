@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**MAGIos** is a 32-bit operating system written in **Odin**, designed as an art piece inspired by the aesthetic of the 1990s anime series _Neon Genesis Evangelion_. This is **not** business or casual-use software - it is an experimental, artistic operating system kernel that prioritizes aesthetic and technical exploration over practical utility.
+**MAGIos** is a 64-bit RISC-V operating system written in **Odin**, designed as an art piece inspired by the aesthetic of the 1990s anime series _Neon Genesis Evangelion_. This is **not** business or casual-use software - it is an experimental, artistic operating system kernel that prioritizes aesthetic and technical exploration over practical utility.
 
 ## Core Principles
 
@@ -39,7 +39,6 @@
 - Prioritize idiomatic Odin solutions
 - Maintain existing Evangelion theming in all modifications
 - Preserve the artistic nature of the project - don't over-optimize for practical use
-- Keep the 32-bit architecture constraint
 - Keep comments accurate and up-to-date with implementation
 
 ### Build System Philosophy
@@ -61,17 +60,17 @@
 
 ### Platform Requirements
 
-- **Target**: 32-bit x86 architecture
+- **Target**: 64-bit RISC-V architecture
 - **Development Platform**: macOS preferred
 - **Odin Version**: Latest stable Odin compiler
-- **Boot Method**: Multiboot-compliant via GRUB
+- **Boot Method**: OpenSBI-compliant via RISC-V SBI
 
 ### Dependencies
 
 - Odin compiler
-- Cross-compiler toolchain (i686-elf-gcc for assembly)
-- QEMU for testing (specifically qemu-system-i386)
-- NASM for assembly
+- RISC-V cross-compiler toolchain (riscv64-elf-gcc)
+- QEMU for testing (specifically qemu-system-riscv64)
+- OpenSBI firmware for boot
 - Standard build tools (bash, etc.)
 
 ## Forbidden Actions
@@ -87,7 +86,7 @@
 - MAGI system aesthetic is preserved and enhanced
 - Build process is simple and functional
 - All toolchain dependencies are properly managed
-- QEMU execution works via `./build.sh --run` and `./build.sh --test`
+- QEMU RISC-V execution works via `./build.sh --run` and `./build.sh --test`
 
 ## When in Doubt
 
@@ -99,16 +98,19 @@
 
 ## Recent Changes
 
-### Odin Language Migration (2025-01-XX)
+### RISC-V Architecture Migration (2025-08-03)
+
+1. **Architecture Switch**: Migrated from x86 32-bit to RISC-V 64-bit for better Odin support
+2. **Boot System**: Changed from GRUB multiboot to OpenSBI supervisor binary interface
+3. **Output System**: Migrated from VGA text mode to UART serial console
+4. **Interrupt Handling**: Replaced x86 IDT with RISC-V trap vectors
+5. **Toolchain**: Updated from i686-elf to riscv64-elf cross-compiler
+6. **Modern Architecture**: Leverages clean RISC-V instruction set without legacy baggage
+
+### Previous Odin Language Migration (2025-07-28)
 
 1. **Language Switch**: Migrated from Swift to Odin for better low-level control
 2. **Simplified Structure**: Single kernel.odin file contains all kernel logic
 3. **Build System**: Simplified build.sh script with --test and --run modes
 4. **Boot Sequence**: Maintained Evangelion-themed MAGI boot messages
-5. **Architecture**: Pure Odin implementation with minimal assembly bootstrap
-
-The Odin implementation maintains the same Evangelion aesthetic while leveraging Odin's systems programming capabilities for a cleaner, more direct kernel implementation.
-
----
-
-_AT Field operational. Pattern Blue. Synchronization rate holding steady._
+5. **Architecture**: Pure Odin implementation with minimal RISC-V assembly bootstrap

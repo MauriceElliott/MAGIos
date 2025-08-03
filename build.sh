@@ -1,29 +1,27 @@
 #!/bin/bash
 # MAGIos Build Script - Terminal Dogma Build System
-# Odin-based kernel build system with Evangelion theming
+# RISC-V 64-bit Odin-based kernel build system with Evangelion theming
 
 set -e
 
 # Build Configuration
-ASM="nasm"
-CC="i686-elf-gcc"
-LD="i686-elf-ld"
+ASM="riscv64-elf-as"
+CC="riscv64-elf-gcc"
+LD="riscv64-elf-ld"
+OBJCOPY="riscv64-elf-objcopy"
 ODIN="odin"
 
 # Path Configuration
 SRCDIR="src"
 BUILDDIR="build"
-ISODIR="iso"
 KERNEL_BINARY="$BUILDDIR/kernel.bin"
-ISO_FILE="magios.iso"
+KERNEL_ELF="$BUILDDIR/kernel.elf"
 
 # Build Files
 BOOT_ASM="$SRCDIR/core/boot.s"
-CPU_ASM="$SRCDIR/core/cpu.s"
 INTERRUPTS_ASM="$SRCDIR/core/interrupts.s"
 KERNEL_ODIN="$SRCDIR/core/kernel.odin"
 LINKER_SCRIPT="$SRCDIR/linker.ld"
-GRUB_CONFIG="$SRCDIR/grub.cfg"
 
 # MAGI System Names
 MAGI_CASPER="CASPER"
@@ -41,69 +39,56 @@ NC='\033[0m'
 
 # Tool Verification
 check_tools() {
-    echo -e "${CYAN}$MAGI_CASPER... Checking toolchain${NC}"
+    echo -e "${CYAN}$MAGI_CASPER... Checking RISC-V toolchain${NC}"
 
     local missing_tools=()
 
-    for tool in nasm qemu-system-i386 odin i686-elf-gcc i686-elf-ld; do
+    for tool in qemu-system-riscv64 odin riscv64-elf-gcc riscv64-elf-ld riscv64-elf-as riscv64-elf-objcopy; do
         if ! command -v $tool &> /dev/null; then
             missing_tools+=($tool)
         fi
     done
-
-    # Check for grub-mkrescue or i686-elf-grub-mkrescue
-    if ! command -v grub-mkrescue &> /dev/null && ! command -v i686-elf-grub-mkrescue &> /dev/null; then
-        missing_tools+=(i686-elf-grub-mkrescue)
-    fi
 
     if [ ${#missing_tools[@]} -gt 0 ]; then
         echo -e "${RED}❌ Missing tools: ${missing_tools[*]}${NC}"
         echo ""
         echo "Installation instructions:"
         echo "  - Odin: https://odin-lang.org/docs/install/"
-        echo "  - Cross-compiler: brew install i686-elf-gcc (macOS)"
-        echo "  - NASM: brew install nasm (macOS)"
-        echo "  - QEMU: brew install qemu (macOS)"
-        echo "  - GRUB: brew install i686-elf-grub (macOS)"
+        echo "  - RISC-V toolchain (macOS): brew tap riscv-software-src/riscv && brew install riscv64-elf-gcc"
+        echo "  - RISC-V toolchain (Linux): sudo apt install gcc-riscv64-linux-gnu"
+        echo "  - QEMU (macOS): brew install qemu"
+        echo "  - QEMU (Linux): sudo apt install qemu-system-riscv64"
         exit 1
     fi
 
-    echo -e "${GREEN}✅ All tools available${NC}"
+    echo -e "${GREEN}✅ All RISC-V tools available${NC}"
 }
 
 # Create Build Directories
 create_directories() {
     echo -e "${YELLOW}$MAGI_MELCHIOR... Creating build directories${NC}"
     mkdir -p "$BUILDDIR"
-    mkdir -p "$ISODIR/boot/grub"
 }
 
 # Clean Build
 clean() {
     echo -e "${RED}🧹 Cleaning build artifacts...${NC}"
-    rm -rf "$BUILDDIR" "$ISODIR" "$ISO_FILE"
+    rm -rf "$BUILDDIR"
     echo -e "${GREEN}✅ Clean complete${NC}"
 }
 
 # Compile Boot Assembly
 compile_boot() {
-    echo -e "${BLUE}📦 Compiling boot assembly...${NC}"
-    $ASM -f elf32 "$BOOT_ASM" -o "$BUILDDIR/boot.o"
-    echo -e "${GREEN}✅ Boot assembly compiled${NC}"
-}
-
-# Compile CPU Assembly
-compile_cpu() {
-    echo -e "${BLUE}📦 Compiling CPU assembly...${NC}"
-    $ASM -f elf32 "$CPU_ASM" -o "$BUILDDIR/cpu.o"
-    echo -e "${GREEN}✅ CPU assembly compiled${NC}"
+    echo -e "${BLUE}📦 Compiling RISC-V boot assembly...${NC}"
+    $ASM "$BOOT_ASM" -o "$BUILDDIR/boot.o"
+    echo -e "${GREEN}✅ RISC-V boot assembly compiled${NC}"
 }
 
 # Compile Interrupts Assembly
 compile_interrupts() {
-    echo -e "${BLUE}📦 Compiling interrupts assembly...${NC}"
-    $ASM -f elf32 "$INTERRUPTS_ASM" -o "$BUILDDIR/interrupts.o"
-    echo -e "${GREEN}✅ Interrupts assembly compiled${NC}"
+    echo -e "${BLUE}📦 Compiling RISC-V interrupt assembly...${NC}"
+    $ASM "$INTERRUPTS_ASM" -o "$BUILDDIR/interrupts.o"
+    echo -e "${GREEN}✅ RISC-V interrupt assembly compiled${NC}"
 }
 
 # Compile Odin Kernel
@@ -111,10 +96,10 @@ compile_kernel() {
     echo -e "${PURPLE}🔨 Compiling Odin kernel package...${NC}"
 
     # Compile entire Odin package to object file
-    # Using linux_i386 target as base for freestanding kernel
+    # Using linux_riscv64 target as base for freestanding kernel
     $ODIN build "$SRCDIR/core" \
         -out:"$BUILDDIR/kernel_odin.o" \
-        -target:linux_i386 \
+        -target:linux_riscv64 \
         -no-bounds-check \
         -disable-red-zone \
         -no-crt \
@@ -129,100 +114,80 @@ compile_kernel() {
 
 # Link Kernel
 link_kernel() {
-    echo -e "${CYAN}🔗 Linking kernel binary...${NC}"
+    echo -e "${CYAN}🔗 Linking RISC-V kernel binary...${NC}"
 
-    $LD -m elf_i386 \
+    $LD -m elf64lriscv \
         -T "$LINKER_SCRIPT" \
-        -o "$KERNEL_BINARY" \
-        "$BUILDDIR/kernel_odin.o" \
+        -o "$KERNEL_ELF" \
         "$BUILDDIR/boot.o" \
-        "$BUILDDIR/cpu.o" \
         "$BUILDDIR/interrupts.o" \
+        "$BUILDDIR/kernel_odin.o" \
         -nostdlib
 
-    echo -e "${GREEN}✅ Kernel linked${NC}"
+    # Create flat binary for potential bare-metal boot
+    $OBJCOPY -O binary "$KERNEL_ELF" "$KERNEL_BINARY"
+
+    echo -e "${GREEN}✅ RISC-V kernel linked${NC}"
 }
 
-# Create ISO
-create_iso() {
-    echo -e "${BLUE}📀 Creating Terminal Dogma ISO...${NC}"
-
-    # Copy kernel and GRUB config
-    cp "$KERNEL_BINARY" "$ISODIR/boot/"
-    cp "$GRUB_CONFIG" "$ISODIR/boot/grub/"
-
-    # Create ISO with GRUB - try different methods
-    if command -v i686-elf-grub-mkrescue &> /dev/null; then
-        echo "Using i686-elf-grub-mkrescue..."
-        i686-elf-grub-mkrescue -o "$ISO_FILE" "$ISODIR" 2>/dev/null
-    elif command -v grub-mkrescue &> /dev/null; then
-        echo "Using grub-mkrescue..."
-        grub-mkrescue -o "$ISO_FILE" "$ISODIR" 2>/dev/null
-    else
-        echo -e "${RED}❌ Unable to create ISO - missing grub tools${NC}"
-        echo "Please install GRUB tools: brew install i686-elf-grub"
-        exit 1
-    fi
-
-    if [ -f "$ISO_FILE" ]; then
-        echo -e "${GREEN}✅ ISO created: $ISO_FILE${NC}"
-    else
-        echo -e "${RED}❌ Failed to create ISO file${NC}"
-        exit 1
-    fi
-}
-
-# Run in QEMU (GUI mode)
+# Run in QEMU (with serial console)
 run_qemu() {
-    echo -e "${PURPLE}🚀 Launching MAGIos in QEMU...${NC}"
-    echo -e "   ${CYAN}AT Field operational. Pattern Blue.${NC}"
+    echo -e "${PURPLE}🚀 Launching MAGIos on RISC-V in QEMU...${NC}"
+    echo -e "   ${CYAN}AT Field operational. Pattern Blue. RISC-V sync rate nominal.${NC}"
+    echo -e "   ${YELLOW}Press Ctrl+A then X to exit QEMU${NC}"
     echo ""
 
-    qemu-system-i386 \
-        -cdrom "$ISO_FILE" \
-        -m 32M \
-        -vga std \
-        -display default,show-cursor=on
+    qemu-system-riscv64 \
+        -machine virt \
+        -cpu rv64 \
+        -smp 1 \
+        -m 128M \
+        -nographic \
+        -serial stdio \
+        -bios default \
+        -kernel "$KERNEL_ELF"
 }
 
-# Test in QEMU (headless mode)
+# Test in QEMU (headless mode with timeout)
 test_qemu() {
-    echo -e "${YELLOW}🧪 Testing MAGIos kernel in headless mode...${NC}"
-    echo -e "   ${PURPLE}Output will appear below (timeout: 5s)${NC}"
+    echo -e "${YELLOW}🧪 Testing MAGIos RISC-V kernel in headless mode...${NC}"
+    echo -e "   ${PURPLE}Output will appear below (timeout: 10s)${NC}"
     echo ""
     echo "========================================="
 
     # Run QEMU in headless mode with serial output
-    timeout 5s qemu-system-i386 \
-        -cdrom "$ISO_FILE" \
-        -m 32M \
+    timeout 10s qemu-system-riscv64 \
+        -machine virt \
+        -cpu rv64 \
+        -smp 1 \
+        -m 128M \
         -nographic \
-        -serial mon:stdio \
-        -display none \
+        -serial stdio \
+        -bios default \
+        -kernel "$KERNEL_ELF" \
         || true
 
     echo "========================================="
-    echo -e "${GREEN}✅ Kernel test completed${NC}"
+    echo -e "${GREEN}✅ RISC-V kernel test completed${NC}"
 }
 
 # Build Process
 build() {
-    echo -e "${CYAN}🔨 Building MAGIos kernel...${NC}"
+    echo -e "${CYAN}🔨 Building MAGIos RISC-V kernel...${NC}"
 
     create_directories
     compile_boot
-    compile_cpu
     compile_interrupts
     compile_kernel
     link_kernel
-    create_iso
 
-    echo -e "${GREEN}✅ Build complete!${NC}"
+    echo -e "${GREEN}✅ RISC-V build complete!${NC}"
 }
 
 # Main Script
 main() {
     echo "MAGI SYSTEM STARTUP SEQUENCE INITIATED"
+    echo "RISC-V Architecture - Pattern Blue"
 
     # Parse arguments
     case "$1" in
@@ -240,14 +205,14 @@ main() {
             echo "Usage: $0 [--clean|--test|--run]"
             echo "  --clean  Remove all build artifacts"
             echo "  --test   Build and test in headless QEMU"
-            echo "  --run    Build and run in QEMU with GUI"
+            echo "  --run    Build and run in QEMU with serial console"
             exit 1
             ;;
     esac
 
     # Check tools and build
     check_tools
-    echo -e "${PURPLE}$MAGI_BALTHASAR... Initializing build system${NC}"
+    echo -e "${PURPLE}$MAGI_BALTHASAR... Initializing RISC-V build system${NC}"
     echo ""
 
     build
@@ -262,12 +227,12 @@ main() {
     echo ""
     echo -e "${GREEN}🎉 Terminal Dogma Operational!${NC}"
     echo ""
-    echo "MAGIos 0.0.1 ready for deployment"
-    echo "ISO: $ISO_FILE ($(ls -lh $ISO_FILE 2>/dev/null | awk '{print $5}' || echo 'Unknown size'))"
+    echo "MAGIos 0.1.0 ready for RISC-V deployment"
+    echo "Kernel: $KERNEL_ELF ($(ls -lh $KERNEL_ELF 2>/dev/null | awk '{print $5}' || echo 'Unknown size'))"
     echo ""
     echo "Usage: ./build.sh [--clean|--test|--run]"
     echo ""
-    echo -e "${PURPLE}Terminal Dogma build complete. Ready for synchronization.${NC} 🎌"
+    echo -e "${PURPLE}Terminal Dogma RISC-V build complete. Ready for synchronization.${NC} 🎌"
 }
 
 # Run main function
