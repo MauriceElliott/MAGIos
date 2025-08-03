@@ -205,6 +205,513 @@ qemu-system-riscv64 \
 6. **Memory Management** - Virtual memory setup
 7. **Advanced Features** - Build on stable foundation
 
+## Detailed Implementation Guide
+
+### Phase 1: RISC-V Boot Assembly (`src/core/boot.s`)
+
+**Goal**: Get the kernel to boot and call `kernel_main()` successfully.
+
+**Create new `src/core/boot.s`:**
+
+```assembly
+# MAGIos RISC-V Boot Assembly
+# Terminal Dogma Boot Sequence - RISC-V Edition
+
+.section .text.boot
+.globl _start
+
+_start:
+    # MAGI System Boot Initialization
+    # RISC-V 64-bit entry point from OpenSBI
+
+    # Disable interrupts during boot
+    csrw mie, zero
+    csrw sie, zero
+
+    # Set up stack pointer (use symbol from linker script)
+    la sp, _stack_top
+
+    # Clear BSS section (MELCHIOR system initialization)
+    la t0, _bss_start
+    la t1, _bss_end
+clear_bss:
+    beq t0, t1, bss_cleared
+    sd zero, 0(t0)
+    addi t0, t0, 8
+    j clear_bss
+bss_cleared:
+
+    # Call main kernel function (preserve Evangelion theming)
+    call kernel_main
+
+    # Halt if kernel_main returns (should never happen)
+hang:
+    wfi  # Wait for interrupt (power saving)
+    j hang
+
+.section .note.GNU-stack,"",%progbits
+```
+
+**Testing Phase 1:**
+
+```bash
+./build.sh --test
+```
+
+**Expected Output:**
+
+- Build should succeed
+- QEMU should boot but likely hang (no output yet)
+- No crash or error messages
+
+---
+
+### Phase 2: UART Output System (`src/core/adam.odin`)
+
+**Goal**: Replace VGA text mode with UART serial console for Evangelion-themed output.
+
+**Key changes to `src/core/adam.odin`:**
+
+1. **Replace VGA constants with UART:**
+
+```odin
+// Replace this block:
+VGA_WIDTH :: 80
+VGA_HEIGHT :: 25
+VGA_MEMORY :: 0xB8000
+
+// With UART constants:
+UART_BASE :: 0x10000000
+UART_THR :: 0  // Transmit Holding Register offset
+UART_LSR :: 5  // Line Status Register offset
+```
+
+2. **Replace VGA color system:**
+
+```odin
+// Remove VGA color constants, replace with ANSI escape codes
+ANSI_RESET :: "\x1b[0m"
+ANSI_BLACK :: "\x1b[30m"
+ANSI_RED :: "\x1b[31m"
+ANSI_GREEN :: "\x1b[32m"
+ANSI_YELLOW :: "\x1b[33m"
+ANSI_BLUE :: "\x1b[34m"
+ANSI_MAGENTA :: "\x1b[35m"
+ANSI_CYAN :: "\x1b[36m"
+ANSI_WHITE :: "\x1b[37m"
+```
+
+3. **Replace terminal output functions:**
+
+```odin
+// Replace VGA memory access with UART
+uart_write_char :: proc(char: u8) {
+    uart_base := cast(^volatile u8)UART_BASE
+    // Wait for transmit ready
+    for {
+        lsr := cast(^volatile u8)(UART_BASE + UART_LSR)
+        if (lsr^ & 0x20) != 0 do break  // THR empty
+    }
+    // Send character
+    thr := cast(^volatile u8)(UART_BASE + UART_THR)
+    thr^ = char
+}
+
+terminal_putchar :: proc(char: u8) {
+    uart_write_char(char)
+}
+
+// Update terminal_clear to use ANSI escape sequences
+terminal_clear :: proc() {
+    terminal_write("\x1b[2J\x1b[H")  // Clear screen + home cursor
+}
+
+// Update color functions
+terminal_setcolor :: proc(color: string) {
+    terminal_write(color)
+}
+```
+
+4. **Update boot sequence colors:**
+
+```odin
+boot_sequence :: proc() {
+    terminal_clear()
+
+    // MAGI System header with ANSI colors
+    terminal_setcolor(ANSI_CYAN)
+    terminal_write("MAGIos RISC-V Boot Sequence Initiated.\n")
+    terminal_write("--------------------------------------\n\n")
+
+    // MAGI subsystems status
+    terminal_setcolor(ANSI_GREEN)
+    terminal_write("CASPER-1 Online... (RISC-V RV64GC)\n")
+    terminal_write("MELCHIOR-2 Online... (Virtual Memory)\n")
+    terminal_write("BALTHASAR-3 Online... (Trap System)\n\n")
+
+    // Final status
+    terminal_setcolor(ANSI_RED)
+    terminal_write("MAGI System nominal.\n")
+    terminal_write("God is in his heaven, all is right with the world.\n")
+
+    terminal_setcolor(ANSI_RESET)
+}
+```
+
+**Testing Phase 2:**
+
+```bash
+./build.sh --run
+```
+
+**Expected Output:**
+
+```
+MAGIos RISC-V Boot Sequence Initiated.
+--------------------------------------
+
+CASPER-1 Online... (RISC-V RV64GC)
+MELCHIOR-2 Online... (Virtual Memory)
+BALTHASAR-3 Online... (Trap System)
+
+MAGI System nominal.
+God is in his heaven, all is right with the world.
+```
+
+---
+
+### Phase 3: RISC-V Trap System (`src/core/lilith.odin`)
+
+**Goal**: Replace x86 IDT with RISC-V trap handling for exceptions and interrupts.
+
+**Key changes to `src/core/lilith.odin`:**
+
+1. **Replace IDT structures with RISC-V trap frame:**
+
+```odin
+// Remove IDTEntry, IDT_PTR, IDT structs
+// Add RISC-V trap frame:
+
+TrapFrame :: struct {
+    // General-purpose registers x1-x31 (x0 is always 0)
+    ra:   u64,  // x1 - Return address
+    sp:   u64,  // x2 - Stack pointer
+    gp:   u64,  // x3 - Global pointer
+    tp:   u64,  // x4 - Thread pointer
+    t0:   u64,  // x5 - Temporary
+    t1:   u64,  // x6 - Temporary
+    t2:   u64,  // x7 - Temporary
+    s0:   u64,  // x8 - Saved register / Frame pointer
+    s1:   u64,  // x9 - Saved register
+    a0:   u64,  // x10 - Function argument / return value
+    a1:   u64,  // x11 - Function argument / return value
+    a2:   u64,  // x12 - Function argument
+    a3:   u64,  // x13 - Function argument
+    a4:   u64,  // x14 - Function argument
+    a5:   u64,  // x15 - Function argument
+    a6:   u64,  // x16 - Function argument
+    a7:   u64,  // x17 - Function argument
+    s2:   u64,  // x18 - Saved register
+    s3:   u64,  // x19 - Saved register
+    s4:   u64,  // x20 - Saved register
+    s5:   u64,  // x21 - Saved register
+    s6:   u64,  // x22 - Saved register
+    s7:   u64,  // x23 - Saved register
+    s8:   u64,  // x24 - Saved register
+    s9:   u64,  // x25 - Saved register
+    s10:  u64,  // x26 - Saved register
+    s11:  u64,  // x27 - Saved register
+    t3:   u64,  // x28 - Temporary
+    t4:   u64,  // x29 - Temporary
+    t5:   u64,  // x30 - Temporary
+    t6:   u64,  // x31 - Temporary
+
+    // Special registers
+    pc:     u64,  // Program counter (mepc)
+    cause:  u64,  // Trap cause (mcause)
+    tval:   u64,  // Trap value (mtval)
+    status: u64,  // Status register (mstatus)
+}
+
+// Timer interrupt setup
+CLINT_BASE :: 0x02000000
+CLINT_MTIME :: CLINT_BASE + 0xBFF8
+CLINT_MTIMECMP :: CLINT_BASE + 0x4000
+```
+
+2. **Replace setup_idt with setup_traps:**
+
+```odin
+setup_traps :: proc() {
+    terminal_write("Setting up RISC-V trap system...\n")
+
+    // Set trap vector (mtvec) to our trap handler
+    // Will be implemented in interrupts.s
+    set_trap_vector()
+
+    // Enable timer interrupts
+    enable_timer_interrupts()
+
+    terminal_write("RISC-V Trap System Initialized.\n")
+}
+
+// These will be implemented as foreign functions
+foreign _ {
+    set_trap_vector :: proc() ---
+    enable_timer_interrupts :: proc() ---
+    get_time :: proc() -> u64 ---
+    set_timer :: proc(time: u64) ---
+}
+```
+
+3. **Replace interrupt dispatcher:**
+
+```odin
+@(export)
+trap_handler :: proc "c" (frame: ^TrapFrame) {
+    context = runtime.default_context()
+
+    cause := frame.cause
+
+    // Check if it's an interrupt (MSB set) or exception
+    if (cause & (1 << 63)) != 0 {
+        // Interrupt
+        interrupt_cause := cause & 0x7FFFFFFFFFFFFFFF
+        switch interrupt_cause {
+        case 7: // Timer interrupt
+            handle_timer_interrupt()
+        case:
+            terminal_write("Unknown interrupt: ")
+            terminal_write(eliquence.stringify(interrupt_cause))
+            terminal_write("\n")
+        }
+    } else {
+        // Exception
+        terminal_write("Exception occurred: ")
+        terminal_write(eliquence.stringify(cause))
+        terminal_write(" at PC: ")
+        terminal_write(eliquence.stringify(frame.pc))
+        terminal_write("\n")
+        // Halt on exceptions for now
+        for {}
+    }
+}
+
+handle_timer_interrupt :: proc() {
+    // Set next timer interrupt (10ms from now)
+    current_time := get_time()
+    next_time := current_time + 100000  // 10ms at 10MHz
+    set_timer(next_time)
+
+    // Optional: show timer tick
+    terminal_write("Timer tick\n")
+}
+```
+
+**Create new `src/core/interrupts.s` for RISC-V:**
+
+```assembly
+# MAGIos RISC-V Trap Handlers
+# Lilith System - Trap Management
+
+.section .text
+.align 4
+
+.globl set_trap_vector
+set_trap_vector:
+    la t0, trap_vector
+    csrw mtvec, t0
+    ret
+
+.globl enable_timer_interrupts
+enable_timer_interrupts:
+    # Enable machine timer interrupt in mie
+    li t0, (1 << 7)
+    csrs mie, t0
+
+    # Enable global interrupts in mstatus
+    li t0, (1 << 3)
+    csrs mstatus, t0
+    ret
+
+.globl get_time
+get_time:
+    # Read current time from CLINT
+    li t0, 0x0200BFF8  # CLINT_MTIME
+    ld a0, 0(t0)
+    ret
+
+.globl set_timer
+set_timer:
+    # Set timer compare value
+    li t0, 0x02004000  # CLINT_MTIMECMP
+    sd a0, 0(t0)
+    ret
+
+# Main trap vector - saves context and calls Odin handler
+.align 4
+trap_vector:
+    # Save context to stack (simplified for now)
+    addi sp, sp, -256  # Space for TrapFrame
+
+    # Save all registers to TrapFrame on stack
+    sd ra, 0(sp)
+    sd sp, 8(sp)   # Note: this saves the pre-trap SP
+    sd gp, 16(sp)
+    sd tp, 24(sp)
+    sd t0, 32(sp)
+    sd t1, 40(sp)
+    sd t2, 48(sp)
+    sd s0, 56(sp)
+    sd s1, 64(sp)
+    sd a0, 72(sp)
+    sd a1, 80(sp)
+    sd a2, 88(sp)
+    sd a3, 96(sp)
+    sd a4, 104(sp)
+    sd a5, 112(sp)
+    sd a6, 120(sp)
+    sd a7, 128(sp)
+    sd s2, 136(sp)
+    sd s3, 144(sp)
+    sd s4, 152(sp)
+    sd s5, 160(sp)
+    sd s6, 168(sp)
+    sd s7, 176(sp)
+    sd s8, 184(sp)
+    sd s9, 192(sp)
+    sd s10, 200(sp)
+    sd s11, 208(sp)
+    sd t3, 216(sp)
+    sd t4, 224(sp)
+    sd t5, 232(sp)
+    sd t6, 240(sp)
+
+    # Save special registers
+    csrr t0, mepc
+    sd t0, 248(sp)     # pc
+    csrr t0, mcause
+    sd t0, 256(sp)     # cause
+    csrr t0, mtval
+    sd t0, 264(sp)     # tval
+    csrr t0, mstatus
+    sd t0, 272(sp)     # status
+
+    # Call Odin trap handler with frame pointer
+    mv a0, sp
+    call trap_handler
+
+    # Restore context (reverse order)
+    ld t0, 248(sp)
+    csrw mepc, t0
+    ld t0, 272(sp)
+    csrw mstatus, t0
+
+    # Restore general registers
+    ld ra, 0(sp)
+    ld gp, 16(sp)
+    ld tp, 24(sp)
+    ld t0, 32(sp)
+    ld t1, 40(sp)
+    ld t2, 48(sp)
+    ld s0, 56(sp)
+    ld s1, 64(sp)
+    ld a0, 72(sp)
+    ld a1, 80(sp)
+    ld a2, 88(sp)
+    ld a3, 96(sp)
+    ld a4, 104(sp)
+    ld a5, 112(sp)
+    ld a6, 120(sp)
+    ld a7, 128(sp)
+    ld s2, 136(sp)
+    ld s3, 144(sp)
+    ld s4, 152(sp)
+    ld s5, 160(sp)
+    ld s6, 168(sp)
+    ld s7, 176(sp)
+    ld s8, 184(sp)
+    ld s9, 192(sp)
+    ld s10, 200(sp)
+    ld s11, 208(sp)
+    ld t3, 216(sp)
+    ld t4, 224(sp)
+    ld t5, 232(sp)
+    ld t6, 240(sp)
+
+    addi sp, sp, 256   # Restore stack pointer
+
+    mret  # Return from trap
+
+.section .note.GNU-stack,"",%progbits
+```
+
+**Update `src/core/kernel.odin`:**
+
+```odin
+// Replace setup_idt() call with:
+setup_traps()
+```
+
+**Testing Phase 3:**
+
+```bash
+./build.sh --run
+```
+
+**Expected Output:**
+
+```
+MAGIos RISC-V Boot Sequence Initiated.
+--------------------------------------
+
+CASPER-1 Online... (RISC-V RV64GC)
+MELCHIOR-2 Online... (Virtual Memory)
+BALTHASAR-3 Online... (Trap System)
+
+MAGI System nominal.
+God is in his heaven, all is right with the world.
+
+Setting up RISC-V trap system...
+RISC-V Trap System Initialized.
+Timer tick
+Timer tick
+Timer tick
+...
+```
+
+---
+
+### Testing Points and Troubleshooting
+
+**Common Issues:**
+
+1. **Phase 1 - Boot hangs**: Check stack pointer setup in linker script
+2. **Phase 2 - No output**: Verify UART base address (0x10000000 for QEMU virt)
+3. **Phase 3 - Trap crashes**: Check trap frame size and register saving/restoring
+
+**Debug Commands:**
+
+```bash
+# Check if kernel loads correctly
+file build/kernel.elf
+riscv64-elf-objdump -h build/kernel.elf
+
+# Debug boot process
+qemu-system-riscv64 -machine virt -kernel build/kernel.elf -d cpu,int -nographic
+
+# Check assembly output
+riscv64-elf-objdump -d build/boot.o
+```
+
+**Success Criteria:**
+
+- ✅ Phase 1: Kernel boots without crashing
+- ✅ Phase 2: Evangelion boot messages appear via UART
+- ✅ Phase 3: Timer interrupts work without system crash
+
+After Phase 3, you'll have a fully functional RISC-V kernel with working output and interrupt handling - a major milestone! 🎌
+
 ## Testing Strategy
 
 Each phase should be tested incrementally:
