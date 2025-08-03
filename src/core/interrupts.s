@@ -335,9 +335,17 @@ isr_stub_32:
 global isr_stub_33:function (isr_stub_33.end - isr_stub_33)
 isr_stub_33:
         pusha
-        push 33
-        call terminal_dispatch
-        add esp, 4
+
+        ; Write 'K' directly to VGA memory at position (0,0)
+        mov word [0xB8000], 0x0F4B  ; 'K' in white on black
+
+        ; Read scancode to clear keyboard buffer
+        in al, 0x60
+
+        ; Send EOI to PIC
+        mov al, 0x20
+        out 0x20, al
+
         popa
         iret
 .end:

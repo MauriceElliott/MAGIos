@@ -182,19 +182,15 @@ init_keyboard :: proc() {
 //Remember to add the proc "c" bit so this becomes available not only in c but also in assembly
 terminal_dispatch :: proc "c" (interrupt_number: u32) {
 	context = runtime.default_context()
-	// terminal_write("ALL ABOARD TERMINAL DISPATCH!.\n")
 
+	// Keyboard interrupt (33) is now handled directly in assembly
+	// This handler is for other interrupts (0-32 CPU exceptions)
 	switch interrupt_number {
-	case 33:
-		sync_keyboard()
+	case 0 ..= 32:
+		// CPU exception occurred - halt system
+		cpu_halt_forever()
 	case:
-		cpu_halt()
+		// Unknown interrupt - halt system
+		cpu_halt_forever()
 	}
-}
-
-sync_keyboard :: proc() {
-	scancode := cpu_inb(0x60)
-
-	// Acknowledge interrupt to PIC
-	cpu_outb(0x20, 0x20) // Send EOI (End of Interrupt) to master PIC
 }
