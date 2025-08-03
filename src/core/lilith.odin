@@ -103,6 +103,15 @@ setup_idt :: proc() {
 	idt_set_gate(32, cast(u32)cast(uintptr)cast(rawptr)isr_stub_32, 0x08, 0x8E)
 	idt_set_gate(33, cast(u32)cast(uintptr)cast(rawptr)isr_stub_33, 0x08, 0x8E)
 
+	// Debug: Test with isr_stub_32 address to see if issue is specific to stub_33
+	stub32_addr := cast(u32)cast(uintptr)cast(rawptr)isr_stub_32
+	stub33_addr := cast(u32)cast(uintptr)cast(rawptr)isr_stub_33
+	terminal_write("stub_32 addr=")
+	terminal_write(eliquence.stringify(stub32_addr))
+	terminal_write(" stub_33 addr=")
+	terminal_write(eliquence.stringify(stub33_addr))
+	terminal_write("\n")
+
 	idt_instance.idt_ptr.limit = u16(size_of(idt_instance.entries) - 1)
 	idt_instance.idt_ptr.base = cast(u32)cast(uintptr)&idt_instance.entries
 

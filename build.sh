@@ -134,10 +134,10 @@ link_kernel() {
     $LD -m elf_i386 \
         -T "$LINKER_SCRIPT" \
         -o "$KERNEL_BINARY" \
+        "$BUILDDIR/kernel_odin.o" \
         "$BUILDDIR/boot.o" \
         "$BUILDDIR/cpu.o" \
         "$BUILDDIR/interrupts.o" \
-        "$BUILDDIR/kernel_odin.o" \
         -nostdlib
 
     echo -e "${GREEN}✅ Kernel linked${NC}"
