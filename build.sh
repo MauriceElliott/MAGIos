@@ -84,6 +84,13 @@ compile_boot() {
     echo -e "${GREEN}✅ RISC-V boot assembly compiled${NC}"
 }
 
+# Compile CPU Assembly
+compile_cpu() {
+    echo -e "${BLUE}📦 Compiling RISC-V CPU assembly...${NC}"
+    $ASM "$SRCDIR/core/cpu.s" -o "$BUILDDIR/cpu.o"
+    echo -e "${GREEN}✅ RISC-V CPU assembly compiled${NC}"
+}
+
 # Compile Interrupts Assembly
 compile_interrupts() {
     echo -e "${BLUE}📦 Compiling RISC-V interrupt assembly...${NC}"
@@ -96,10 +103,10 @@ compile_kernel() {
     echo -e "${PURPLE}🔨 Compiling Odin kernel package...${NC}"
 
     # Compile entire Odin package to object file
-    # Using linux_riscv64 target as base for freestanding kernel
+    # Using freestanding_riscv64 target for bare-metal kernel
     $ODIN build "$SRCDIR/core" \
         -out:"$BUILDDIR/kernel_odin.o" \
-        -target:linux_riscv64 \
+        -target:freestanding_riscv64 \
         -no-bounds-check \
         -disable-red-zone \
         -no-crt \
@@ -120,6 +127,7 @@ link_kernel() {
         -T "$LINKER_SCRIPT" \
         -o "$KERNEL_ELF" \
         "$BUILDDIR/boot.o" \
+        "$BUILDDIR/cpu.o" \
         "$BUILDDIR/interrupts.o" \
         "$BUILDDIR/kernel_odin.o" \
         -nostdlib
@@ -143,7 +151,7 @@ run_qemu() {
         -smp 1 \
         -m 128M \
         -nographic \
-        -serial stdio \
+        -serial mon:stdio \
         -bios default \
         -kernel "$KERNEL_ELF"
 }
@@ -162,7 +170,7 @@ test_qemu() {
         -smp 1 \
         -m 128M \
         -nographic \
-        -serial stdio \
+        -serial mon:stdio \
         -bios default \
         -kernel "$KERNEL_ELF" \
         || true
@@ -177,6 +185,7 @@ build() {
 
     create_directories
     compile_boot
+    compile_cpu
     compile_interrupts
     compile_kernel
     link_kernel

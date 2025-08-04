@@ -74,7 +74,7 @@ sudo apt install qemu-system-riscv64 gcc-riscv64-linux-gnu
 
 The kernel is compiled with these Odin flags:
 
-- `-target:linux_riscv64` - RISC-V 64-bit target (freestanding)
+- `-target:freestanding_riscv64` - RISC-V 64-bit bare-metal target
 - `-no-bounds-check` - Disable runtime bounds checking
 - `-no-crt` - No C runtime
 - `-default-to-nil-allocator` - No default allocator

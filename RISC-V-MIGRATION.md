@@ -380,6 +380,163 @@ God is in his heaven, all is right with the world.
 
 ---
 
+### Phase 2.5: RISC-V CPU Helper Functions (`src/core/cpu.s`)
+
+**Goal**: Replace x86 CPU helper functions with RISC-V equivalents for interrupt control and system management.
+
+**Remove old `src/core/cpu.s` and create new RISC-V version:**
+
+```assembly
+# MAGIos RISC-V CPU Assembly Helper Functions
+# Provides RISC-V instruction wrappers for Odin kernel
+
+.section .text
+
+# Disable machine-level interrupts
+.globl cpu_disable_interrupts
+cpu_disable_interrupts:
+    csrci mstatus, 0x8  # Clear MIE bit (bit 3)
+    ret
+
+# Enable machine-level interrupts
+.globl cpu_enable_interrupts
+cpu_enable_interrupts:
+    csrsi mstatus, 0x8  # Set MIE bit (bit 3)
+    ret
+
+# Halt CPU (wait for interrupt)
+.globl cpu_halt
+cpu_halt:
+    wfi  # Wait for interrupt
+    ret
+
+# Halt CPU forever (infinite loop)
+.globl cpu_halt_forever
+cpu_halt_forever:
+    csrci mstatus, 0x8  # Disable interrupts first
+1:
+    wfi                 # Wait for interrupt
+    j 1b                # Jump back
+
+# Read from memory-mapped I/O (RISC-V doesn't have port I/O)
+# Parameter: address in a0, returns value in a0
+.globl cpu_read_mmio_8
+cpu_read_mmio_8:
+    lb a0, 0(a0)        # Load byte from address
+    ret
+
+.globl cpu_read_mmio_32
+cpu_read_mmio_32:
+    lw a0, 0(a0)        # Load word from address
+    ret
+
+.globl cpu_read_mmio_64
+cpu_read_mmio_64:
+    ld a0, 0(a0)        # Load double-word from address
+    ret
+
+# Write to memory-mapped I/O
+# Parameters: address in a0, value in a1
+.globl cpu_write_mmio_8
+cpu_write_mmio_8:
+    sb a1, 0(a0)        # Store byte to address
+    ret
+
+.globl cpu_write_mmio_32
+cpu_write_mmio_32:
+    sw a1, 0(a0)        # Store word to address
+    ret
+
+.globl cpu_write_mmio_64
+cpu_write_mmio_64:
+    sd a1, 0(a0)        # Store double-word to address
+    ret
+
+# Crash/debug breakpoint equivalent
+.globl crash
+crash:
+    ebreak              # RISC-V debug breakpoint
+    j crash             # Loop forever
+
+# Flush instruction cache (RISC-V fence)
+.globl cpu_fence_i
+cpu_fence_i:
+    fence.i             # Instruction fence
+    ret
+
+# Memory barrier
+.globl cpu_fence
+cpu_fence:
+    fence               # Memory fence
+    ret
+
+.section .note.GNU-stack,"",%progbits
+```
+
+**Update `src/core/adam.odin` to use new RISC-V functions:**
+
+Replace x86 port I/O references:
+
+```odin
+// Remove these foreign declarations:
+// cpu_inb :: proc(port: u16) -> u8 ---
+// cpu_outb :: proc(port: u16, value: u8) ---
+
+// Add these RISC-V foreign declarations:
+foreign _ {
+    cpu_disable_interrupts :: proc() ---
+    cpu_enable_interrupts :: proc() ---
+    cpu_halt :: proc() ---
+    cpu_halt_forever :: proc() ---
+    cpu_read_mmio_8 :: proc(addr: uintptr) -> u8 ---
+    cpu_write_mmio_8 :: proc(addr: uintptr, value: u8) ---
+    cpu_read_mmio_32 :: proc(addr: uintptr) -> u32 ---
+    cpu_write_mmio_32 :: proc(addr: uintptr, value: u32) ---
+    cpu_read_mmio_64 :: proc(addr: uintptr) -> u64 ---
+    cpu_write_mmio_64 :: proc(addr: uintptr, value: u64) ---
+    crash :: proc() ---
+    cpu_fence :: proc() ---
+    cpu_fence_i :: proc() ---
+}
+```
+
+**Update UART functions to use memory-mapped I/O:**
+
+```odin
+uart_write_char :: proc(char: u8) {
+    // Wait for transmit ready using memory-mapped I/O
+    lsr_addr := UART_BASE + UART_LSR
+    for {
+        lsr := cpu_read_mmio_8(lsr_addr)
+        if (lsr & 0x20) != 0 do break  // THR empty
+    }
+    // Send character
+    thr_addr := UART_BASE + UART_THR
+    cpu_write_mmio_8(thr_addr, char)
+}
+```
+
+**Testing Phase 2.5:**
+
+```bash
+./build.sh --test
+```
+
+**Expected Output:**
+
+- Build should succeed with new RISC-V CPU functions
+- UART output should still work correctly
+- Interrupt enable/disable functions ready for Phase 3
+
+**Key Differences from x86:**
+
+- **No Port I/O**: RISC-V uses memory-mapped I/O instead of `in`/`out` instructions
+- **CSR Instructions**: Control and Status Register instructions replace x86 flags
+- **WFI vs HLT**: `wfi` (Wait For Interrupt) is RISC-V equivalent of x86 `hlt`
+- **Memory Barriers**: RISC-V has explicit `fence` instructions for memory ordering
+
+---
+
 ### Phase 3: RISC-V Trap System (`src/core/lilith.odin`)
 
 **Goal**: Replace x86 IDT with RISC-V trap handling for exceptions and interrupts.
@@ -765,7 +922,7 @@ Each phase should be tested incrementally:
 2. **QEMU crashes**: Check kernel ELF format with `file kernel.elf`
 3. **No output**: Verify UART base address (0x10000000 for virt machine)
 4. **Boot hangs**: Check linker script memory layout
-5. **Odin compilation fails**: Verify target is `linux_riscv64`
+5. **Odin compilation fails**: Verify target is `freestanding_riscv64`
 
 ### Debug Commands:
 

@@ -1,86 +1,79 @@
-; MAGIos CPU Assembly Helper Functions
-; Provides CPU instruction wrappers for Odin kernel
+# MAGIos CPU Assembly Helper Functions
 
-section .text
+.section .text
 
-; Disable interrupts
-global cpu_disable_interrupts:function (cpu_disable_interrupts.end - cpu_disable_interrupts)
+# Disable interrupts
+.globl cpu_disable_interrupts
 cpu_disable_interrupts:
-    cli
+    csrci mstatus, 0x8 # Clear MIE bit (bit 3)
     ret
-.end:
 
-; Halt CPU
-global cpu_halt:function (cpu_halt.end - cpu_halt)
-cpu_halt:
-    hlt
-    ret
-.end:
-
-; Halt CPU forever (infinite loop)
-global cpu_halt_forever:function (cpu_halt_forever.end - cpu_halt_forever)
-cpu_halt_forever:
-    cli                ; Disable interrupts first
-.loop:
-    hlt                ; Halt until interrupt
-    jmp .loop          ; Jump back (in case of NMI)
-.end:
-
-; Enable interrupts
-global cpu_enable_interrupts:function (cpu_enable_interrupts.end - cpu_enable_interrupts)
+#enable interrupts
+.globl cpu_enable_interrupts
 cpu_enable_interrupts:
-    sti
+    csrsi mstatus, 0x8
     ret
-.end:
 
-; Read from I/O port (8-bit)
-; Parameter: port number in first argument (following calling convention)
-global cpu_inb:function (cpu_inb.end - cpu_inb)
-cpu_inb:
-    push ebp
-    mov ebp, esp
-
-    mov edx, [ebp + 8]  ; Get port number from stack
-    in al, dx           ; Read byte from port
-
-    pop ebp
+.globl cpu_halt
+cpu_halt:
+    wfi # wait for interrupt
     ret
-.end:
 
-; Write to I/O port (8-bit)
-; Parameters: port number, value
-global cpu_outb:function (cpu_outb.end - cpu_outb)
-cpu_outb:
-    push ebp
-    mov ebp, esp
+.globl cpu_halt_forever
+cpu_halt_forever:
+    csrci mstatus, 0x8
+1:
+    wfi
+    j 1b
 
-    mov edx, [ebp + 8]  ; Get port number
-    mov eax, [ebp + 12] ; Get value
-    out dx, al          ; Write byte to port
-
-    pop ebp
+.globl cpu_read_mmio_8
+cpu_read_mmio_8:
+    lb a0, 0(a0)
     ret
-.end:
 
-; Load Interrupt Descriptor Table
-; Parameter: pointer to IDT descriptor
-global lidt:function (lidt.end - lidt)
-lidt:
-    push ebp
-    mov ebp, esp
-
-    mov eax, [ebp + 8]  ; Get IDT descriptor pointer from stack
-    lidt [eax]          ; Load IDT
-
-    pop ebp
+.globl cpu_read_mmio_32
+cpu_read_mmio_32:
+    lw a0, 0(a0)
     ret
-.end:
 
-global crash:function (crash.end - crash)
+.globl cpu_read_mmio_64
+cpu_read_mmio_64:
+    ld a0, 0(a0)        # Load double-word from address
+    ret
+
+# Write to memory-mapped I/O
+# Parameters: address in a0, value in a1
+.globl cpu_write_mmio_8
+cpu_write_mmio_8:
+    sb a1, 0(a0)        # Store byte to address
+    ret
+
+.globl cpu_write_mmio_32
+cpu_write_mmio_32:
+    sw a1, 0(a0)        # Store word to address
+    ret
+
+.globl cpu_write_mmio_64
+cpu_write_mmio_64:
+    sd a1, 0(a0)        # Store double-word to address
+    ret
+
+# Crash/debug breakpoint equivalent
+.globl crash
 crash:
-    int 3
-.end:
+    ebreak              # RISC-V debug breakpoint
+    j crash             # Loop forever
 
-; GNU-STACK SECTION
-; This section marks the stack as non-executable to satisfy GNU ld requirements
-section .note.GNU-stack noalloc noexec nowrite progbits
+# Flush instruction cache (RISC-V fence)
+.globl cpu_fence_i
+cpu_fence_i:
+    fence.i             # Instruction fence
+    ret
+
+# Memory barrier
+.globl cpu_fence
+cpu_fence:
+    fence               # Memory fence
+    ret
+
+.section .note.GNU-stack,"",%progbits
