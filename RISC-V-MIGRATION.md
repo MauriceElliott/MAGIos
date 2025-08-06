@@ -229,7 +229,7 @@ qemu-system-riscv64 \
     -smp 1 \                     # Single CPU core
     -m 128M \                    # 128MB RAM
     -display cocoa \             # Cocoa GUI window (macOS)
-    -serial stdio \              # Serial console to terminal
+    -serial mon:vc \             # Serial console in QEMU window
     -bios default \              # Use built-in OpenSBI
     -kernel build/kernel.elf     # Load our kernel directly
 ```
@@ -243,7 +243,7 @@ qemu-system-riscv64 \
     -smp 1 \                     # Single CPU core
     -m 128M \                    # 128MB RAM
     -display gtk \               # GTK GUI window (Linux)
-    -serial stdio \              # Serial console to terminal
+    -serial mon:vc \             # Serial console in QEMU window
     -bios default \              # Use built-in OpenSBI
     -kernel build/kernel.elf     # Load our kernel directly
 ```
