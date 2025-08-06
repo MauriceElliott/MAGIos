@@ -61,7 +61,7 @@
 ### Platform Requirements
 
 - **Target**: 64-bit RISC-V architecture
-- **Development Platform**: macOS preferred
+- **Development Platform**: macOS preferred (uses Cocoa display for QEMU)
 - **Odin Version**: Latest stable Odin compiler
 - **Boot Method**: OpenSBI-compliant via RISC-V SBI
 
@@ -69,7 +69,7 @@
 
 - Odin compiler
 - RISC-V cross-compiler toolchain (riscv64-elf-gcc)
-- QEMU for testing (specifically qemu-system-riscv64)
+- QEMU for testing (specifically qemu-system-riscv64 with Cocoa support on macOS)
 - OpenSBI firmware for boot
 - Standard build tools (bash, etc.)
 
@@ -106,6 +106,10 @@
 4. **Interrupt Handling**: Replaced x86 IDT with RISC-V trap vectors
 5. **Toolchain**: Updated from i686-elf to riscv64-elf cross-compiler
 6. **Modern Architecture**: Leverages clean RISC-V instruction set without legacy baggage
+7. **S-mode Boot Fix**: Fixed boot sequence to use S-mode CSRs (sie/sip) instead of M-mode (mie) for OpenSBI handoff
+8. **UART Consolidation**: Simplified UART functions by consolidating uart_write_char, terminal_putchar, and terminal_write into single terminal_write function
+9. **GUI Mode**: Updated QEMU --run mode to open separate GUI window (Cocoa on macOS, GTK on Linux) instead of terminal output
+10. **Interrupt Migration Incomplete**: Removed x86 IDT system but RISC-V trap vectors not yet implemented - requires completion
 
 ### Previous Odin Language Migration (2025-07-28)
 

@@ -58,8 +58,6 @@ stringify :: proc(num: $T) -> string {
 	}
 }
 
-
-//TODO: Change to coal() for Coalesce, sounds sexier and matches the edgy vibe of MAGIos
 coal :: proc(a: string, b: string) -> string {
 	// Buffer large enough for both strings
 	buffer: [256]u8

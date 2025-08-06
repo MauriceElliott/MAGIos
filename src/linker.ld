@@ -8,7 +8,7 @@ MEMORY
 {
     /* RAM starts at 0x80000000 in RISC-V QEMU virt machine */
     /* We'll load our kernel at the beginning of RAM */
-    RAM (rwx) : ORIGIN = 0x80000000, LENGTH = 128M
+    RAM (rwx) : ORIGIN = 0x80200000, LENGTH = 128M
 }
 
 /* Define the program headers */
@@ -21,7 +21,7 @@ PHDRS
 SECTIONS
 {
     /* Kernel starts at beginning of RAM */
-    . = 0x80000000;
+    . = 0x80200000;
 
     /* MAGI System - Code Section */
     .text : ALIGN(4K)
