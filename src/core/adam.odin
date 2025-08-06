@@ -20,25 +20,19 @@ terminal_row: u32 = 0
 terminal_column: u32 = 0
 terminal_color: string = ANSI_WHITE
 
-uart_write_char :: proc(char: u8) {
-	uart_base := cast(^u8)(uintptr(UART_BASE))
-	// wait for transmit ready
-	for {
-		lsr := cast(^u8)(uintptr(UART_BASE) + UART_LSR)
-		if lsr^ & 0x20 != 0 do break
-	}
-	// Send Character
-	thr := cast(^u8)(uintptr(UART_BASE) + UART_THR)
-	thr^ = char
-}
-
-terminal_putchar :: proc(char: u8) {
-	uart_write_char(char)
-}
-
 terminal_write :: proc(data: string) {
+	// Direct UART register access
+	uart_thr := cast(^u8)(uintptr(UART_BASE + UART_THR))
+	uart_lsr := cast(^u8)(uintptr(UART_BASE + UART_LSR))
+
 	for i in 0 ..< len(data) {
-		terminal_putchar(data[i])
+		// Wait for transmit holding register to be empty (bit 5 of LSR)
+		for (uart_lsr^ & 0x20) == 0 {
+			// Busy wait - transmitter not ready
+		}
+
+		// Send character
+		uart_thr^ = data[i]
 	}
 }
 
@@ -51,23 +45,14 @@ terminal_setcolor :: proc(color: string) {
 	terminal_color = color
 }
 
-// Write a null-terminated C string
-terminal_write_cstring :: proc(data: cstring) {
-	data_ptr := cast(^u8)data
-	i := 0
-	for {
-		char_ptr := cast(^u8)(uintptr(data_ptr) + uintptr(i))
-		if char_ptr^ == 0 do break
-		terminal_putchar(char_ptr^)
-		i += 1
-	}
-}
 
 boot_sequence :: proc() {
 	terminal_clear()
 
 	// MAGI System header with ANSI colors
 	terminal_setcolor(ANSI_CYAN)
+	terminal_write("\n\n\n\n")
+	terminal_write("--------------------------------------\n\n")
 	terminal_write("MAGIos RISC-V Boot Sequence Initiated.\n")
 	terminal_write("--------------------------------------\n\n")
 
@@ -117,24 +102,19 @@ kernel_panic :: proc(message: string) {
 
 // Main kernel entry point - called from boot.s
 @(export)
-kernel_main :: proc "c" (magic: u32, mbi_addr: u32) {
+kernel_main :: proc "c" () {
 	context = {}
-
-	if magic != 0x2BADB002 {
-		kernel_panic("Invalid multiboot magic number!")
-	}
 
 	// Run boot sequence
 	boot_sequence()
 
-	// Initialize Terminal Dispatch
-	// setup_idt()
-	cpu_enable_interrupts()
+	// For RISC-V, we'll implement trap handlers instead of x86 IDT
+	// TODO: setup_traps()
 
-	terminal_write("INTERRUPTS ENABLED.\n")
-	terminal_write("Waiting for keyboard input...\n")
+	terminal_write("RISC-V KERNEL OPERATIONAL.\n")
+	terminal_write("MAGI systems synchronized.\n")
 
-	// Keep kernel running to receive keyboard interrupts
+	// Keep kernel running
 	for {
 		cpu_halt() // Halt until interrupt, then continue loop
 	}

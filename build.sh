@@ -20,7 +20,7 @@ KERNEL_ELF="$BUILDDIR/kernel.elf"
 # Build Files
 BOOT_ASM="$SRCDIR/core/boot.s"
 INTERRUPTS_ASM="$SRCDIR/core/interrupts.s"
-KERNEL_ODIN="$SRCDIR/core/kernel.odin"
+KERNEL_ODIN="$SRCDIR/core/adam.odin"
 LINKER_SCRIPT="$SRCDIR/linker.ld"
 
 # MAGI System Names
@@ -138,11 +138,11 @@ link_kernel() {
     echo -e "${GREEN}✅ RISC-V kernel linked${NC}"
 }
 
-# Run in QEMU (with serial console)
+# Run in QEMU (with GUI window)
 run_qemu() {
     echo -e "${PURPLE}🚀 Launching MAGIos on RISC-V in QEMU...${NC}"
     echo -e "   ${CYAN}AT Field operational. Pattern Blue. RISC-V sync rate nominal.${NC}"
-    echo -e "   ${YELLOW}Press Ctrl+A then X to exit QEMU${NC}"
+    echo -e "   ${YELLOW}QEMU window will open. Use Cmd+Q to exit QEMU${NC}"
     echo ""
 
     qemu-system-riscv64 \
@@ -150,8 +150,8 @@ run_qemu() {
         -cpu rv64 \
         -smp 1 \
         -m 128M \
-        -nographic \
-        -serial mon:stdio \
+        -display cocoa \
+        -serial stdio \
         -bios default \
         -kernel "$KERNEL_ELF"
 }

@@ -7,23 +7,26 @@ _start:
     # entrypoint for OpenSBI
 
     # disable interrupts during boot
-    # CSR is the Control and Status Registry, csrw is writing to it.
-    csrw mie, zero
+    # OpenSBI hands off in S-mode, so use S-mode CSRs
     csrw sie, zero
+    csrw sip, zero
 
-    # la means load address
+    # Setup stack pointer
     la sp, _stack_top
 
-    # clear bss section.
+    # Clear BSS section with proper loop guard
     la t0, _bss_start
     la t1, _bss_end
+
+    # Skip BSS clearing if start >= end (safety check)
+    bgeu t0, t1, bss_cleared
+
 clear_bss:
-    # not sure honestly. says branch if zero in the docs, but branch to what who knows?
-    beq t0, t1, bss_cleared
-    # zero's out the t0 address space afaik.
-    sd zero, 0(t0)
-    addi t0, t0, 8
-    j clear_bss # j for jump, or goto
+    beq t0, t1, bss_cleared    # Exit when we reach the end
+    sd zero, 0(t0)             # Clear 8 bytes
+    addi t0, t0, 8             # Move to next 8-byte boundary
+    bltu t0, t1, clear_bss     # Continue if t0 < t1
+
 bss_cleared:
 
     # Call kernel!
