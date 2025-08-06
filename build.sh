@@ -142,7 +142,7 @@ link_kernel() {
 run_qemu() {
     echo -e "${PURPLE}🚀 Launching MAGIos on RISC-V in QEMU...${NC}"
     echo -e "   ${CYAN}AT Field operational. Pattern Blue. RISC-V sync rate nominal.${NC}"
-    echo -e "   ${YELLOW}QEMU window will open. Kernel output will appear in QEMU console.${NC}"
+    echo -e "   ${YELLOW}QEMU window will open. Kernel output with colors will appear in QEMU console.${NC}"
     echo -e "   ${YELLOW}Use Cmd+Q to exit QEMU${NC}"
     echo ""
 

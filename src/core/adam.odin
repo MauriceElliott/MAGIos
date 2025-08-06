@@ -4,21 +4,10 @@ UART_BASE :: 0x10000000
 UART_THR :: 0 // Transmit Holding Registry Offset
 UART_LSR :: 5 // Line Status Register offset
 
-// Remove VGA color constants, replace with ANSI escape codes
-ANSI_RESET :: "\x1b[0m"
-ANSI_BLACK :: "\x1b[30m"
-ANSI_RED :: "\x1b[31m"
-ANSI_GREEN :: "\x1b[32m"
-ANSI_YELLOW :: "\x1b[33m"
-ANSI_BLUE :: "\x1b[34m"
-ANSI_MAGENTA :: "\x1b[35m"
-ANSI_CYAN :: "\x1b[36m"
-ANSI_WHITE :: "\x1b[37m"
-
 // Terminal state
 terminal_row: u32 = 0
 terminal_column: u32 = 0
-terminal_color: string = ANSI_WHITE
+terminal_width: u32 = 100
 
 terminal_write :: proc(data: string) {
 	// Direct UART register access
@@ -31,43 +20,50 @@ terminal_write :: proc(data: string) {
 			// Busy wait - transmitter not ready
 		}
 
-		// Send character
-		uart_thr^ = data[i]
+		// Send character and track position
+		c := data[i]
+		uart_thr^ = c
+
+		// Update cursor tracking
+		if c == '\n' {
+			terminal_row += 1
+			terminal_column = 0
+		} else if c == '\r' {
+			terminal_column = 0
+		} else if c >= 32 { 	// Printable character
+			terminal_column += 1
+			if terminal_column >= terminal_width {
+				uart_thr^ = '\r' // Force carriage return
+				uart_thr^ = '\n' // Force newline
+				terminal_row += 1
+				terminal_column = 0
+			}
+		}
 	}
 }
 
 terminal_clear :: proc() {
-	terminal_write("\x1b[2J\x1b[H")
-}
-
-// Set terminal color
-terminal_setcolor :: proc(color: string) {
-	terminal_color = color
+	// Send enough newlines to clear screen
+	for i in 0 ..< 25 {
+		terminal_write("\r\n")
+	}
+	terminal_row = 0
+	terminal_column = 0
 }
 
 
 boot_sequence :: proc() {
-	terminal_clear()
+	//terminal_clear()
 
-	// MAGI System header with ANSI colors
-	terminal_setcolor(ANSI_CYAN)
-	terminal_write("\n\n\n\n")
-	terminal_write("--------------------------------------\n\n")
-	terminal_write("MAGIos RISC-V Boot Sequence Initiated.\n")
-	terminal_write("--------------------------------------\n\n")
+	terminal_write("\r\n\r\n")
+	terminal_write("=== MAGIos Boot ===\r\n\r\n")
 
-	// MAGI subsystems status
-	terminal_setcolor(ANSI_GREEN)
-	terminal_write("CASPER-1 Online... (RISC-V RV64GC)\n")
-	terminal_write("MELCHIOR-2 Online... (Virtual Memory)\n")
-	terminal_write("BALTHASAR-3 Online... (Trap System)\n\n")
+	terminal_write("CASPER-1 Online\r\n")
+	terminal_write("MELCHIOR-2 Online\r\n")
+	terminal_write("BALTHASAR-3 Online\r\n\r\n")
 
-	// Final status
-	terminal_setcolor(ANSI_RED)
-	terminal_write("MAGI System nominal.\n")
-	terminal_write("God is in his heaven, all is right with the world.\n")
-
-	terminal_setcolor(ANSI_RESET)
+	terminal_write("MAGI nominal.\r\n")
+	terminal_write("All is right.\r\n\r\n")
 }
 
 foreign _ {
@@ -111,8 +107,8 @@ kernel_main :: proc "c" () {
 	// For RISC-V, we'll implement trap handlers instead of x86 IDT
 	// TODO: setup_traps()
 
-	terminal_write("RISC-V KERNEL OPERATIONAL.\n")
-	terminal_write("MAGI systems synchronized.\n")
+	terminal_write("KERNEL OK.\r\n")
+	terminal_write("MAGI SYNC.\r\n")
 
 	// Keep kernel running
 	for {
