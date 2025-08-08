@@ -100,7 +100,9 @@ trap_handler :: proc "c" (frame: ^TrapFrame) {
 		terminal_write(virtues.stringify(frame.pc))
 		terminal_write("\n")
 		// Halt on exceptions for now
-		for {}
+		for {
+			cpu_halt()
+		}
 	}
 }
 

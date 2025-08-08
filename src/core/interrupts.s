@@ -24,14 +24,14 @@ enable_timer_interrupts:
 .globl get_time
 get_time:
     # Read current time from CLINT
-    li t0, 0x0200BFF8  # CLINT_MTIME
+    li t0, 0x0200BFF8 # CLINT_MTIME
     ld a0, 0(t0)
     ret
 
 .globl set_timer
 set_timer:
     # Set timer compare value
-    li t0, 0x02004000  # CLINT_MTIMECMP
+    li t0, 0x02004000 # CLINT_MTIMECMP
     sd a0, 0(t0)
     ret
 
@@ -39,11 +39,11 @@ set_timer:
 .align 4
 trap_vector:
     # Save context to stack (simplified for now)
-    addi sp, sp, -256  # Space for TrapFrame
+    addi sp, sp, -256 # Space for TrapFrame
 
     # Save all registers to TrapFrame on stack
     sd ra, 0(sp)
-    sd sp, 8(sp)   # Note: this saves the pre-trap SP
+    sd sp, 8(sp) # Note: this saves the pre-trap SP
     sd gp, 16(sp)
     sd tp, 24(sp)
     sd t0, 32(sp)
@@ -76,13 +76,13 @@ trap_vector:
 
     # Save special registers
     csrr t0, mepc
-    sd t0, 248(sp)     # pc
+    sd t0, 248(sp) # pc
     csrr t0, mcause
-    sd t0, 256(sp)     # cause
+    sd t0, 256(sp) # cause
     csrr t0, mtval
-    sd t0, 264(sp)     # tval
+    sd t0, 264(sp) # tval
     csrr t0, mstatus
-    sd t0, 272(sp)     # status
+    sd t0, 272(sp) # status
 
     # Call Odin trap handler with frame pointer
     mv a0, sp
@@ -126,8 +126,8 @@ trap_vector:
     ld t5, 232(sp)
     ld t6, 240(sp)
 
-    addi sp, sp, 256   # Restore stack pointer
+    addi sp, sp, 256 # Restore stack pointer
 
-    mret  # Return from trap
+    mret # Return from trap
 
 .section .note.GNU-stack,"",%progbits
