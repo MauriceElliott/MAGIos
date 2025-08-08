@@ -4,6 +4,32 @@ UART_BASE :: 0x10000000
 UART_THR :: 0 // Transmit Holding Registry Offset
 UART_LSR :: 5 // Line Status Register offset
 
+//Display
+RES_X :: 640
+RES_Y :: 480
+BUFFER_SIZE :: RES_X * RES_Y
+// Colourmode uses an unsigned 32bit integer to allow for 32bit RGBA
+FBUFFER: [BUFFER_SIZE]u32
+BBUFFER: [BUFFER_SIZE]u32
+
+white := 0xFFFFFFFF
+black := 0xFF000000
+
+update_pixel :: proc(x: u16, y: u16, colour: u32) {
+	BBUFFER[x + y * RES_X] = colour
+}
+
+draw_line :: proc() {
+	// not implemented
+}
+
+draw_rect :: proc() {
+	// not implemented
+}
+
+draw_circ :: proc() {
+	// not implemented
+}
 
 terminal_write :: proc(data: string) {
 	// Direct UART register access
