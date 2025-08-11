@@ -1,6 +1,6 @@
 package core
 
-import "../virtues"
+import v "../virtues"
 
 UART_BASE :: 0x10000000
 UART_THR :: 0 // Transmit Holding Registry Offset
@@ -55,10 +55,23 @@ boot_sequence :: proc() {
 	terminal_println("=== MAGIos Boot Sequence Initiated ===")
 	terminal_println("")
 
-	terminal_println("CASPER-1 Online")
-	terminal_println("MELCHIOR-2 Online")
-	terminal_println("BALTHASAR-3 Online")
-	terminal_println("")
+	// terminal_println("CASPER-1 Online")
+	// terminal_println("MELCHIOR-2 Online")
+	// terminal_println("BALTHASAR-3 Online")
+
+	glyph_data: [6][32]u8
+	glyph_ptrs: [6][]u8
+
+	for i in 0 ..< len(glyph_ptrs) {
+		glyph_ptrs[i] = glyph_data[i][:]
+	}
+
+	count := v.string_to_psf_buffer("Hello.", glyph_ptrs[:])
+	terminal_println(v.coal("Processed: ", v.stringify(count)))
+
+	if count > 0 {
+		terminal_println(v.coal("First glyph byte: ", v.stringify(glyph_data[1][0])))
+	}
 
 	terminal_println("MAGI System nominal.")
 	terminal_println("God is in his heaven, all is right with the world.")

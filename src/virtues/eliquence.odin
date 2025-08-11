@@ -98,19 +98,21 @@ coal :: proc(a: string, b: string) -> string {
 //May get included in the glyph array as a struct, but no need right now, only have a single font.
 BYTES_PER_GLYPH :: 32
 
-string_to_psf_buffer :: proc(
-	input: string,
-	allocator := context.allocator,
-) -> [][BYTES_PER_GLYPH]u8 {
-	buffer := make([][BYTES_PER_GLYPH]u8, len(input), allocator)
-
-	result_len := len(input)
-	for character, c_index in input {
+string_to_psf_buffer :: proc(text: string, buffer: [][]u8) -> int {
+	if len(text) > len(buffer) do return -1
+	count := 0
+	for character, c_index in text {
 		glyph_index := int(character)
 		glyph_start := glyph_index * BYTES_PER_GLYPH
-		for b_index in 0 ..< BYTES_PER_GLYPH {
-			buffer[c_index][b_index] = glyphs.inconsolata_16x16_font[glyph_start + b_index]
-		}
+
+		if glyph_start + BYTES_PER_GLYPH > len(glyphs.inconsolata_16x16_font) do continue
+		if len(buffer[c_index]) < BYTES_PER_GLYPH do continue
+
+		copy(
+			buffer[c_index],
+			glyphs.inconsolata_16x16_font[glyph_start:glyph_start + BYTES_PER_GLYPH],
+		)
+		count += 1
 	}
-	return buffer[:result_len]
+	return count
 }
