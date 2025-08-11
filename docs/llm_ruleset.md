@@ -25,48 +25,20 @@
 - Build script should handle both --test (headless) and --run (GUI) modes for QEMU
 - Build output should be clean and professional while maintaining the Evangelion theming
 
-## LLM Light Mode (Optional)
+## LLM Lite Mode (Optional)
 
 ### Activation
 
-- **Prompt at Context Start**: At the beginning of each new context, ask the user: "Would you like to enable LLM Light Mode? (y/n)"
+- **Prompt at Context Start**: At the beginning of each new context, ask the user: "Would you like to enable LLM Lite Mode? (y/n)"
 - **User Choice**: Respect the user's decision and remember it for the current session
-
-### Light Mode Behavior
-
-When Light Mode is enabled:
-
-1. **No Code Provided**: Do not generate, write, or provide actual code implementations
-2. **No Code Updates**: Do not make changes to existing code files
-3. **Feedback Only**: Provide analysis, suggestions, and guidance on what issues might exist
-4. **Documentation Citations**: All feedback must include references to relevant documentation, standards, or best practices
-5. **Method Examples**: When explaining approaches, provide conceptual examples that highlight the method without actual implementation
-6. **Educational Focus**: Emphasize teaching and understanding over direct solutions
-
-### Light Mode Exceptions
-
-Light Mode still allows:
-
-- **Documentation Updates**: Can update README files, comments, and documentation
-- **Build Logic Updates**: Can modify build scripts when directly requested
-- **Tool Configuration**: Can adjust configuration files and build system settings
-
-### Light Mode Response Format
-
-Structure responses as:
-
-1. **Issue Analysis**: What the problem appears to be
-2. **Suggested Approach**: Conceptual method to address it
-3. **Documentation References**: Cite relevant specs, manuals, or standards
-4. **Example Pattern**: Show the pattern or method (not the actual fix)
-5. **Next Steps**: What the user should research or consider
+- if yes/y, check docs/lite_mode.md - this is to avoid lite mode instructions unneccessarily being added to the context.
 
 ## LLM Interaction Guidelines
 
 ### Error Handling & Attempts
 
 - **Maximum 2 attempts** to fix any single issue before rechecking these rules
-- **Maximum 6 total attempts** without checking back with the user for direction
+- **Maximum 4 total attempts** without checking back with the user for direction
 - When stuck, always reference back to these rules and ask for human guidance
 - While making changes and rebuilding, always use ./build.sh --test over --run as that way it removes the need for human intervention and ensures the llm can read the output.
 

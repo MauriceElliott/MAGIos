@@ -1,5 +1,7 @@
 package core
 
+import "../virtues"
+
 UART_BASE :: 0x10000000
 UART_THR :: 0 // Transmit Holding Registry Offset
 UART_LSR :: 5 // Line Status Register offset
@@ -17,18 +19,6 @@ black := 0xFF000000
 
 update_pixel :: proc(x: u16, y: u16, colour: u32) {
 	BBUFFER[x + y * RES_X] = colour
-}
-
-draw_line :: proc() {
-	// not implemented
-}
-
-draw_rect :: proc() {
-	// not implemented
-}
-
-draw_circ :: proc() {
-	// not implemented
 }
 
 terminal_write :: proc(data: string) {

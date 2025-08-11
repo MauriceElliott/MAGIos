@@ -1,8 +1,8 @@
-# MAGIos Framebuffer & Double Buffering Implementation Plan
+# MAGIos Framebuffer & Text Rendering Implementation Plan
 
 ## Objective
 
-Implement a framebuffer and double buffering system in MAGIos to eliminate screen flicker and tearing, providing smooth graphical output in QEMU.
+Implement a framebuffer and double buffering system in MAGIos to eliminate screen flicker and tearing, providing smooth text rendering output in QEMU. The initial goal is to render text only, not shapes or graphical primitives.
 
 ---
 
@@ -25,10 +25,11 @@ Implement a framebuffer and double buffering system in MAGIos to eliminate scree
 
 ---
 
-### 3. **Implement Drawing Routines**
+### 3. **Implement Text Rendering Routines**
 
 - Functions to set pixel color in the back buffer.
-- Functions to draw primitives (lines, rectangles, text, etc.) to the back buffer.
+- Functions to render text glyphs to the back buffer.
+- Do not implement shape or graphical primitive drawing at this stage.
 
 ---
 
@@ -42,7 +43,7 @@ Implement a framebuffer and double buffering system in MAGIos to eliminate scree
 
 ### 5. **Update Main Loop and Interrupt Handler**
 
-- Main loop draws to the back buffer.
+- Main loop renders text to the back buffer.
 - Timer interrupt (or vertical blank event) triggers buffer swap/copy.
 - Avoid drawing directly to the front buffer.
 
@@ -78,8 +79,8 @@ draw_pixel :: proc(x: int, y: int, color: u32) {
 // Step 3: Main loop
 main_loop :: proc() {
     while running {
-        // Draw scene to back buffer
-        draw_scene(back_buffer)
+        // Render text to back buffer
+        render_text(back_buffer, "MAGIos Booting...")
 
         // Wait for timer interrupt or redraw signal
         if redraw_flag {
@@ -103,10 +104,10 @@ on_timer_interrupt :: proc() {
 ## Next Steps
 
 1. Finalize framebuffer resolution and color format.
-2. Implement buffer allocation and drawing routines.
+2. Implement buffer allocation and text rendering routines.
 3. Integrate double buffering logic into main loop and interrupt handler.
 4. Connect front buffer to QEMU display.
-5. Test and iterate for smooth, flicker-free output.
+5. Test and iterate for smooth, flicker-free text output.
 
 ---
 
@@ -118,4 +119,4 @@ on_timer_interrupt :: proc() {
 
 ---
 
-*Prepared by: MAGIos Engineering Team*
+_Prepared by: MAGIos Engineering Team_
