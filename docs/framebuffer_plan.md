@@ -28,6 +28,7 @@ Implement a framebuffer and double buffering system in MAGIos to eliminate scree
 ### 3. **Implement Text Rendering Routines**
 
 - Functions to set pixel color in the back buffer.
+- Functions to retrieve font glyphs from a string (progress: implemented and tested).
 - Functions to render text glyphs to the back buffer.
 - Do not implement shape or graphical primitive drawing at this stage.
 
@@ -105,6 +106,14 @@ on_timer_interrupt :: proc() {
 
 1. Finalize framebuffer resolution and color format.
 2. Implement buffer allocation and text rendering routines.
+   - **Progress:** Font glyphs can now be retrieved from a string as byte arrays.
+   - **Next:** Implement glyph drawing into the back buffer using the `draw_pixel` method.
+     - For each character in the string:
+       - Retrieve the glyph byte array.
+       - For each row and column in the glyph:
+         - If the bit is set, call `draw_pixel(x + col, y + row, fg_color)` to set the pixel in the back buffer.
+         - Optionally, set background pixels if desired.
+       - Advance the x position for the next character.
 3. Integrate double buffering logic into main loop and interrupt handler.
 4. Connect front buffer to QEMU display.
 5. Test and iterate for smooth, flicker-free text output.

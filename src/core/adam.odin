@@ -59,14 +59,14 @@ boot_sequence :: proc() {
 	// terminal_println("MELCHIOR-2 Online")
 	// terminal_println("BALTHASAR-3 Online")
 
-	glyph_data: [6][32]u8
-	glyph_ptrs: [6][]u8
+	glyph_data: [256][32]u8
+	glyph_ptrs: [256][]u8
 
 	for i in 0 ..< len(glyph_ptrs) {
 		glyph_ptrs[i] = glyph_data[i][:]
 	}
 
-	count := v.string_to_psf_buffer("Hello.", glyph_ptrs[:])
+	count := v.string_to_psf_buffer("Hello  world!.", glyph_ptrs[:])
 	terminal_println(v.coal("Processed: ", v.stringify(count)))
 
 	if count > 0 {
