@@ -4,64 +4,72 @@
 
 Implement a framebuffer and double buffering system in MAGIos to eliminate screen flicker and tearing, providing smooth text rendering output in QEMU. The initial goal is to render text only, not shapes or graphical primitives.
 
+**Status: Significant Progress Made - Core rendering system implemented in `tabris.odin`**
+
 ---
 
 ## Step-by-Step Plan
 
-### 1. **Design Framebuffer Structure**
+### 1. **Design Framebuffer Structure** ✅ **COMPLETE**
 
-- Decide on resolution (e.g., 640x480, 800x600, etc.).
-- Choose color depth (e.g., 32-bit RGBA, 24-bit RGB, 8-bit grayscale).
-- Define a framebuffer as a contiguous block of memory:
-  - `front_buffer`: What the display reads.
-  - `back_buffer`: Where drawing operations occur.
-
----
-
-### 2. **Allocate Framebuffers in Memory**
-
-- Reserve two buffers in kernel memory space.
-- Ensure alignment and accessibility for both drawing and display routines.
+- ✅ Resolution chosen: 640x480 pixels
+- ✅ Color depth chosen: 32-bit RGBA (0xAARRGGBB format)
+- ✅ Framebuffer structure defined in `tabris.odin`:
+  - `FBUFFER`: Front buffer (what the display reads)
+  - `BBUFFER`: Back buffer (where drawing operations occur)
 
 ---
 
-### 3. **Implement Text Rendering Routines**
+### 2. **Allocate Framebuffers in Memory** ✅ **COMPLETE**
 
-- Functions to set pixel color in the back buffer.
-- Functions to retrieve font glyphs from a string (progress: implemented and tested).
-- Functions to render text glyphs to the back buffer.
-- Do not implement shape or graphical primitive drawing at this stage.
-
----
-
-### 4. **Integrate Double Buffering Logic**
-
-- On each frame/timer interrupt:
-  - Copy the entire back buffer to the front buffer in one operation.
-  - Only the front buffer is ever read by the display hardware or QEMU.
+- ✅ Two buffers allocated as global arrays in kernel space
+- ✅ Both buffers are 640x480x4 bytes (32-bit RGBA)
+- ✅ Accessible to all drawing and display routines
 
 ---
 
-### 5. **Update Main Loop and Interrupt Handler**
+### 3. **Implement Text Rendering Routines** ✅ **COMPLETE**
 
-- Main loop renders text to the back buffer.
-- Timer interrupt (or vertical blank event) triggers buffer swap/copy.
-- Avoid drawing directly to the front buffer.
-
----
-
-### 6. **Connect Framebuffer to QEMU Display**
-
-- Ensure QEMU is configured to use a graphical display backend.
-- Map the front buffer to the expected memory region for QEMU’s virtual graphics device (e.g., VGA, VESA, or custom MMIO).
+- ✅ `update_pixel()`: Sets pixel color in back buffer
+- ✅ `string_to_psf_buffer()`: Retrieves font glyphs from PSF2 font data
+- ✅ `draw_rune_with_magic()`: Renders individual glyph bitmaps to back buffer
+- ✅ `draw_string()`: Renders complete strings with proper character positioning
+- ✅ PSF2 font parsing with proper header offset handling
+- ✅ 16x16 pixel glyph rendering with bit-level precision
 
 ---
 
-### 7. **Testing and Optimization**
+### 4. **Integrate Double Buffering Logic** 🚧 **IN PROGRESS**
 
-- Verify smooth output and absence of flicker.
-- Tune timer frequency for optimal frame rate (e.g., 60Hz).
-- Profile memory usage and performance.
+- 🚧 Buffer swap mechanism not yet implemented
+- 🚧 Need function to copy BBUFFER to FBUFFER
+- 🚧 Timer interrupt integration pending
+- ✅ Back buffer drawing operations implemented
+
+---
+
+### 5. **Update Main Loop and Interrupt Handler** 🚧 **PENDING**
+
+- 🚧 Integration with boot process not yet implemented
+- 🚧 Timer interrupt handler for buffer swapping needed
+- ✅ All drawing operations properly target back buffer only
+- 🚧 Main loop integration with `draw_string()` pending
+
+---
+
+### 6. **Connect Framebuffer to QEMU Display** 🚧 **PENDING**
+
+- 🚧 QEMU graphical display backend configuration needed
+- 🚧 Front buffer memory mapping to display device required
+- 🚧 RISC-V display device integration pending
+
+---
+
+### 7. **Testing and Optimization** 🚧 **PENDING**
+
+- 🚧 End-to-end testing pending buffer swap implementation
+- 🚧 Timer frequency tuning for optimal frame rate
+- 🚧 Performance profiling and optimization
 
 ---
 
@@ -104,28 +112,48 @@ on_timer_interrupt :: proc() {
 
 ## Next Steps
 
-1. Finalize framebuffer resolution and color format.
-2. Implement buffer allocation and text rendering routines.
-   - **Progress:** Font glyphs can now be retrieved from a string as byte arrays.
-   - **Next:** Implement glyph drawing into the back buffer using the `draw_pixel` method.
-     - For each character in the string:
-       - Retrieve the glyph byte array.
-       - For each row and column in the glyph:
-         - If the bit is set, call `draw_pixel(x + col, y + row, fg_color)` to set the pixel in the back buffer.
-         - Optionally, set background pixels if desired.
-       - Advance the x position for the next character.
-3. Integrate double buffering logic into main loop and interrupt handler.
-4. Connect front buffer to QEMU display.
-5. Test and iterate for smooth, flicker-free text output.
+Based on current progress in `tabris.odin`:
+
+1. ✅ ~~Finalize framebuffer resolution and color format~~ **COMPLETE**
+2. ✅ ~~Implement buffer allocation and text rendering routines~~ **COMPLETE**
+3. 🚧 **IMMEDIATE NEXT STEPS:**
+   - Implement buffer swap function (`swap_buffers()` or similar)
+   - Add timer interrupt handler to trigger buffer swaps
+   - Integrate `draw_string()` with boot sequence in `adam.odin`
+   - Map front buffer to QEMU display memory region
+4. 🚧 **SUBSEQUENT STEPS:**
+   - Connect front buffer to QEMU graphical display
+   - Test end-to-end rendering pipeline
+   - Optimize performance and eliminate flicker
 
 ---
+
+## Current Implementation Status
+
+### Completed Components (in `tabris.odin`)
+
+- **Double buffering infrastructure**: `FBUFFER` and `BBUFFER` arrays
+- **Pixel manipulation**: `update_pixel()` for back buffer drawing
+- **PSF2 font support**: Proper header parsing and glyph extraction
+- **Glyph rendering**: `draw_rune_with_magic()` with bit-level precision
+- **String rendering**: `draw_string()` with character positioning and newline support
+- **Global cursor tracking**: `posx`/`posy` for text positioning
+
+### Missing Components
+
+- Buffer swapping mechanism
+- Timer interrupt integration
+- QEMU display connection
+- Main loop integration
 
 ## References
 
 - [OSDev Wiki: Double Buffering](https://wiki.osdev.org/Double_buffering)
 - [OSDev Wiki: Framebuffer](https://wiki.osdev.org/Framebuffer)
 - [RISC-V Privileged Architecture Manual](https://github.com/riscv/riscv-isa-manual/releases/latest/download/riscv-privileged.pdf)
+- [PSF Font Format Specification](https://www.win.tue.nl/~aeb/linux/kbd/font-formats-1.html)
 
 ---
 
 _Prepared by: MAGIos Engineering Team_
+_Last Updated: Current implementation progress in tabris.odin_
