@@ -6,21 +6,6 @@ UART_BASE :: 0x10000000
 UART_THR :: 0 // Transmit Holding Registry Offset
 UART_LSR :: 5 // Line Status Register offset
 
-//Display
-RES_X :: 640
-RES_Y :: 480
-BUFFER_SIZE :: RES_X * RES_Y
-// Colourmode uses an unsigned 32bit integer to allow for 32bit RGBA
-FBUFFER: [BUFFER_SIZE]u32
-BBUFFER: [BUFFER_SIZE]u32
-
-white := 0xFFFFFFFF
-black := 0xFF000000
-
-update_pixel :: proc(x: u16, y: u16, colour: u32) {
-	BBUFFER[x + y * RES_X] = colour
-}
-
 terminal_write :: proc(data: string) {
 	// Direct UART register access
 	uart_thr := cast(^u8)(uintptr(UART_BASE + UART_THR))
@@ -59,19 +44,7 @@ boot_sequence :: proc() {
 	// terminal_println("MELCHIOR-2 Online")
 	// terminal_println("BALTHASAR-3 Online")
 
-	glyph_data: [256][32]u8
-	glyph_ptrs: [256][]u8
-
-	for i in 0 ..< len(glyph_ptrs) {
-		glyph_ptrs[i] = glyph_data[i][:]
-	}
-
-	count := v.string_to_psf_buffer("Hello  world!.", glyph_ptrs[:])
-	terminal_println(v.coal("Processed: ", v.stringify(count)))
-
-	if count > 0 {
-		terminal_println(v.coal("First glyph byte: ", v.stringify(glyph_data[1][0])))
-	}
+	count := draw_string("Hello  world!.")
 
 	terminal_println("MAGI System nominal.")
 	terminal_println("God is in his heaven, all is right with the world.")

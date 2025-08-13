@@ -1,7 +1,5 @@
 package virtues
 
-import "glyphs"
-
 u64_stringify :: proc(num: u64) -> string {
 	buffer: [12]u8
 	i := len(buffer)
@@ -86,33 +84,7 @@ coal :: proc(a: string, b: string) -> string {
 	if result_len > len(buffer) {
 		return ""
 	}
-	for i in 0 ..< len(a) {
-		buffer[i] = a[i]
-	}
-	for i in 0 ..< len(b) {
-		buffer[len(a) + i] = b[i]
-	}
+	copy(buffer[:], a)
+	copy(buffer[len(a):], b)
 	return string(buffer[:result_len])
-}
-
-//May get included in the glyph array as a struct, but no need right now, only have a single font.
-BYTES_PER_GLYPH :: 32
-
-string_to_psf_buffer :: proc(text: string, buffer: [][]u8) -> int {
-	if len(text) > len(buffer) do return -1
-	count := 0
-	for character, c_index in text {
-		glyph_index := int(character)
-		glyph_start := glyph_index * BYTES_PER_GLYPH
-
-		if glyph_start + BYTES_PER_GLYPH > len(glyphs.inconsolata_16x16_font) do continue
-		if len(buffer[c_index]) < BYTES_PER_GLYPH do continue
-
-		copy(
-			buffer[c_index],
-			glyphs.inconsolata_16x16_font[glyph_start:glyph_start + BYTES_PER_GLYPH],
-		)
-		count += 1
-	}
-	return count
 }
