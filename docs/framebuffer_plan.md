@@ -1,159 +1,181 @@
-# MAGIos Framebuffer & Text Rendering Implementation Plan
+# MAGIos Framebuffer & Display Implementation Plan
 
 ## Objective
 
-Implement a framebuffer and double buffering system in MAGIos to eliminate screen flicker and tearing, providing smooth text rendering output in QEMU. The initial goal is to render text only, not shapes or graphical primitives.
+Implement a framebuffer system in MAGIos to display graphics in QEMU's GUI window. The current implementation has most components working but lacks proper display output mapping.
 
-**Status: Significant Progress Made - Core rendering system implemented in `tabris.odin`**
-
----
-
-## Step-by-Step Plan
-
-### 1. **Design Framebuffer Structure** ✅ **COMPLETE**
-
-- ✅ Resolution chosen: 640x480 pixels
-- ✅ Color depth chosen: 32-bit RGBA (0xAARRGGBB format)
-- ✅ Framebuffer structure defined in `tabris.odin`:
-  - `FBUFFER`: Front buffer (what the display reads)
-  - `BBUFFER`: Back buffer (where drawing operations occur)
+**Status: Core rendering system complete - Display mapping needs implementation**
 
 ---
 
-### 2. **Allocate Framebuffers in Memory** ✅ **COMPLETE**
+## Current Implementation Analysis
 
-- ✅ Two buffers allocated as global arrays in kernel space
-- ✅ Both buffers are 640x480x4 bytes (32-bit RGBA)
-- ✅ Accessible to all drawing and display routines
+### ✅ **Completed Components**
 
----
+#### Framebuffer Infrastructure (`tabris.odin`)
 
-### 3. **Implement Text Rendering Routines** ✅ **COMPLETE**
+- ✅ Double buffering with `FBUFFER` (front) and `BBUFFER` (back) arrays
+- ✅ 640x480 resolution at 32-bit RGBA color depth
+- ✅ `swap_buffers()`: Copies back buffer to front buffer
+- ✅ `clear_back_buffer()`: Initializes back buffer with black background
 
-- ✅ `update_pixel()`: Sets pixel color in back buffer
-- ✅ `string_to_psf_buffer()`: Retrieves font glyphs from PSF2 font data
-- ✅ `draw_rune_with_magic()`: Renders individual glyph bitmaps to back buffer
-- ✅ `draw_string()`: Renders complete strings with proper character positioning
-- ✅ PSF2 font parsing with proper header offset handling
-- ✅ 16x16 pixel glyph rendering with bit-level precision
+#### Text Rendering System
 
----
+- ✅ `draw_character()`: Renders individual 16x16 pixel glyphs from bitmap font
+- ✅ `draw_string()`: Renders complete strings with automatic line wrapping
+- ✅ `update_pixel()`: Sets individual pixel colors in back buffer
+- ✅ Font system using Inconsolata 16x16 bitmap font data
+- ✅ Proper cursor positioning with `posx`/`posy` tracking
 
-### 4. **Integrate Double Buffering Logic** 🚧 **IN PROGRESS**
+#### Integration Points
 
-- 🚧 Buffer swap mechanism not yet implemented
-- 🚧 Need function to copy BBUFFER to FBUFFER
-- 🚧 Timer interrupt integration pending
-- ✅ Back buffer drawing operations implemented
+- ✅ Boot sequence calls framebuffer functions (`boot_sequence()` in `adam.odin`)
+- ✅ Timer interrupt system sets `redraw_flag` for buffer swaps
+- ✅ Main kernel loop handles buffer swapping on timer interrupts
 
----
+### 🚧 **Missing Component: Display Output**
 
-### 5. **Update Main Loop and Interrupt Handler** 🚧 **PENDING**
+The **critical missing piece** is the display mapping function. Currently:
 
-- 🚧 Integration with boot process not yet implemented
-- 🚧 Timer interrupt handler for buffer swapping needed
-- ✅ All drawing operations properly target back buffer only
-- 🚧 Main loop integration with `draw_string()` pending
+- Graphics render correctly to memory buffers
+- `swap_buffers()` copies data between buffers
+- **No connection exists between `FBUFFER` and QEMU's display**
 
 ---
 
-### 6. **Connect Framebuffer to QEMU Display** 🚧 **PENDING**
+## The Display Problem
 
-- 🚧 QEMU graphical display backend configuration needed
-- 🚧 Front buffer memory mapping to display device required
-- 🚧 RISC-V display device integration pending
+### Current QEMU Configuration
+
+```bash
+# build.sh run_qemu()
+qemu-system-riscv64 \
+    -device virtio-gpu-pci \
+    -display cocoa \
+    # ... other options
+```
+
+### Issues Identified
+
+1. **No framebuffer mapping function**: Missing `map_framebuffer_to_display()`
+2. **VirtIO GPU not initialized**: Device present but not configured
+3. **Display shows blank screen**: QEMU window opens but no graphics appear
 
 ---
 
-### 7. **Testing and Optimization** 🚧 **PENDING**
+## Implementation Plan
 
-- 🚧 End-to-end testing pending buffer swap implementation
-- 🚧 Timer frequency tuning for optimal frame rate
-- 🚧 Performance profiling and optimization
+### **Step 1: Add Display Mapping Function**
 
----
-
-## Pseudocode Example
+Add to `tabris.odin`:
 
 ```odin
-// Step 1: Allocate buffers
-front_buffer: [WIDTH * HEIGHT]u32
-back_buffer:  [WIDTH * HEIGHT]u32
+VIRTIO_GPU_FB_BASE :: 0x50000000  // VirtIO GPU framebuffer address
 
-// Step 2: Drawing function
-draw_pixel :: proc(x: int, y: int, color: u32) {
-    back_buffer[x + y * WIDTH] = color
-}
+map_framebuffer_to_display :: proc() {
+    // Map FBUFFER to QEMU display memory
+    display_fb := cast([^]u32)(uintptr(VIRTIO_GPU_FB_BASE))
 
-// Step 3: Main loop
-main_loop :: proc() {
-    while running {
-        // Render text to back buffer
-        render_text(back_buffer, "MAGIos Booting...")
-
-        // Wait for timer interrupt or redraw signal
-        if redraw_flag {
-            // Step 4: Copy back buffer to front buffer
-            memcpy(front_buffer, back_buffer, sizeof(front_buffer))
-            redraw_flag = false
-        }
+    // Copy front buffer to display memory
+    for i in 0 ..< BUFFER_SIZE {
+        display_fb[i] = FBUFFER[i]
     }
 }
+```
 
-// Step 4: Timer interrupt handler
-on_timer_interrupt :: proc() {
-    redraw_flag = true
-    // Set next timer interrupt
-    set_timer(get_time() + FRAME_INTERVAL)
+### **Step 2: Integrate Display Mapping**
+
+Modify `swap_buffers()` in `tabris.odin`:
+
+```odin
+swap_buffers :: proc() {
+    // Copy back buffer to front buffer
+    for i in 0 ..< BUFFER_SIZE {
+        FBUFFER[i] = BBUFFER[i]
+    }
+
+    // Send front buffer to display
+    map_framebuffer_to_display()
 }
+```
+
+### **Step 3: VirtIO GPU Detection (Optional Enhancement)**
+
+Add to `lilith.odin`:
+
+```odin
+setup_virtio_gpu :: proc() {
+    terminal_write("Initializing VirtIO GPU...\n")
+    // PCI device detection and configuration
+    // Set up proper framebuffer memory mapping
+}
+```
+
+### **Step 4: Alternative Simple Framebuffer**
+
+If VirtIO GPU proves complex, try simpler approach in QEMU:
+
+```bash
+# Alternative QEMU configuration
+-device ramfb,width=640,height=480
 ```
 
 ---
 
-## Next Steps
+## Testing Strategy
 
-Based on current progress in `tabris.odin`:
+### Phase 1: Verify Current System
 
-1. ✅ ~~Finalize framebuffer resolution and color format~~ **COMPLETE**
-2. ✅ ~~Implement buffer allocation and text rendering routines~~ **COMPLETE**
-3. 🚧 **IMMEDIATE NEXT STEPS:**
-   - Implement buffer swap function (`swap_buffers()` or similar)
-   - Add timer interrupt handler to trigger buffer swaps
-   - Integrate `draw_string()` with boot sequence in `adam.odin`
-   - Map front buffer to QEMU display memory region
-4. 🚧 **SUBSEQUENT STEPS:**
-   - Connect front buffer to QEMU graphical display
-   - Test end-to-end rendering pipeline
-   - Optimize performance and eliminate flicker
+1. ✅ Confirm boot sequence renders text to buffers
+2. ✅ Verify `swap_buffers()` copies data correctly
+3. 🚧 Add display mapping and test QEMU GUI output
 
----
+### Phase 2: Display Integration
 
-## Current Implementation Status
+1. Implement `map_framebuffer_to_display()`
+2. Test with `./build.sh --run`
+3. Verify text appears in QEMU window
 
-### Completed Components (in `tabris.odin`)
+### Phase 3: Optimization
 
-- **Double buffering infrastructure**: `FBUFFER` and `BBUFFER` arrays
-- **Pixel manipulation**: `update_pixel()` for back buffer drawing
-- **PSF2 font support**: Proper header parsing and glyph extraction
-- **Glyph rendering**: `draw_rune_with_magic()` with bit-level precision
-- **String rendering**: `draw_string()` with character positioning and newline support
-- **Global cursor tracking**: `posx`/`posy` for text positioning
-
-### Missing Components
-
-- Buffer swapping mechanism
-- Timer interrupt integration
-- QEMU display connection
-- Main loop integration
-
-## References
-
-- [OSDev Wiki: Double Buffering](https://wiki.osdev.org/Double_buffering)
-- [OSDev Wiki: Framebuffer](https://wiki.osdev.org/Framebuffer)
-- [RISC-V Privileged Architecture Manual](https://github.com/riscv/riscv-isa-manual/releases/latest/download/riscv-privileged.pdf)
-- [PSF Font Format Specification](https://www.win.tue.nl/~aeb/linux/kbd/font-formats-1.html)
+1. Verify 60 FPS timer interrupts work correctly
+2. Test smooth text rendering without flicker
+3. Optimize memory copy operations if needed
 
 ---
 
-_Prepared by: MAGIos Engineering Team_
-_Last Updated: Current implementation progress in tabris.odin_
+## Expected Behavior After Fix
+
+1. **Boot sequence**: Text renders to back buffer via `draw_string()`
+2. **Buffer swap**: `swap_buffers()` copies to front buffer and display
+3. **QEMU display**: Window shows MAGIos boot messages graphically
+4. **Timer updates**: 60 FPS redraws for smooth animation
+
+---
+
+## Current Status Summary
+
+| Component           | Status         | Notes                          |
+| ------------------- | -------------- | ------------------------------ |
+| Framebuffer Arrays  | ✅ Complete    | FBUFFER/BBUFFER allocated      |
+| Text Rendering      | ✅ Complete    | draw_string() fully functional |
+| Buffer Swapping     | ✅ Complete    | Memory-to-memory copy works    |
+| Timer Interrupts    | ✅ Complete    | 60 FPS redraw_flag system      |
+| **Display Mapping** | ❌ **MISSING** | **Critical blocker**           |
+| QEMU Configuration  | ✅ Complete    | VirtIO GPU device present      |
+
+---
+
+## Immediate Next Steps
+
+1. **Implement `map_framebuffer_to_display()` function**
+2. **Add display mapping call to `swap_buffers()`**
+3. **Test with `./build.sh --run` to verify GUI output**
+4. **Debug memory mapping if display remains blank**
+
+The rendering system is **architecturally complete** - only the final display output step needs implementation.
+
+---
+
+_Last Updated: Based on current implementation analysis_
+_Critical Issue: Missing display mapping function_
