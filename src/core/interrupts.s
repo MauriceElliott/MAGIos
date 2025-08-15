@@ -7,18 +7,18 @@
 .globl set_trap_vector
 set_trap_vector:
     la t0, trap_vector
-    csrw mtvec, t0
+    csrw stvec, t0
     ret
 
 .globl enable_timer_interrupts
 enable_timer_interrupts:
-    # Enable machine timer interrupt in mie
-    li t0, (1 << 7)
-    csrs mie, t0
+    # Enable supervisor timer interrupt in sie
+    li t0, (1 << 5)
+    csrs sie, t0
 
-    # Enable global interrupts in mstatus
-    li t0, (1 << 3)
-    csrs mstatus, t0
+    # Enable global interrupts in sstatus
+    li t0, (1 << 1)
+    csrs sstatus, t0
     ret
 
 .globl get_time
@@ -75,13 +75,13 @@ trap_vector:
     sd t6, 240(sp)
 
     # Save special registers
-    csrr t0, mepc
+    csrr t0, sepc
     sd t0, 248(sp) # pc
-    csrr t0, mcause
+    csrr t0, scause
     sd t0, 256(sp) # cause
-    csrr t0, mtval
+    csrr t0, stval
     sd t0, 264(sp) # tval
-    csrr t0, mstatus
+    csrr t0, sstatus
     sd t0, 272(sp) # status
 
     # Call Odin trap handler with frame pointer
@@ -90,9 +90,9 @@ trap_vector:
 
     # Restore context (reverse order)
     ld t0, 248(sp)
-    csrw mepc, t0
+    csrw sepc, t0
     ld t0, 272(sp)
-    csrw mstatus, t0
+    csrw sstatus, t0
 
     # Restore general registers
     ld ra, 0(sp)
@@ -128,6 +128,6 @@ trap_vector:
 
     addi sp, sp, 256 # Restore stack pointer
 
-    mret # Return from trap
+    sret # Return from trap
 
 .section .note.GNU-stack,"",%progbits

@@ -151,9 +151,9 @@ run_qemu() {
         -cpu rv64 \
         -smp 1 \
         -m 128M \
-        -device virtio-gpu-pci,xres=640,yres=480 \
+        -device virtio-gpu-pci \
         -display cocoa \
-        -serial mon:vc \
+        -serial stdio \
         -bios default \
         -kernel "$KERNEL_ELF"
 }
