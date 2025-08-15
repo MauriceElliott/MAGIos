@@ -62,6 +62,9 @@ setup_traps :: proc() {
 	// Enable timer interrupts
 	enable_timer_interrupts()
 
+	//Initialize display hardware
+	setup_virtio_gpu()
+
 	terminal_write("RISC-V Trap System Initialized.\n")
 }
 
@@ -106,12 +109,39 @@ trap_handler :: proc "c" (frame: ^TrapFrame) {
 	}
 }
 
+frame_count: u64 = 0
+
 handle_timer_interrupt :: proc() {
-	// Set next timer interrupt (10ms from now)
+	// Set next timer interrupt for 60 FPS
 	current_time := get_time()
-	next_time := current_time + 100000 // 10ms at 10MHz
+	next_time := current_time + 166700 // 16.67ms at 10MHz for 60 FPS
 	set_timer(next_time)
 
-	// Optional: show timer tick
-	terminal_write("Timer tick\n")
+	// Set redraw flag for buffer swap
+	redraw_flag = true
+
+	frame_count += 1
+	if frame_count % 60 == 0 {
+		terminal_write("60 frames rendered\n")
+	}
+}
+
+//VIRTIO GPU Setup
+VIRTIO_GPU_BASE :: 0x10008000
+
+setup_virtio_gpu :: proc() {
+	terminal_write("Initializing VirtIO GPU \n")
+
+	gpu_base := cast(^u32)(uintptr(VIRTIO_GPU_BASE))
+	device_id := cpu_read_mmio_32(uintptr(VIRTIO_GPU_BASE + 0x08))
+	if device_id == 0x1050 { 	// The deviceId of the virtual GPU
+		terminal_write("VirtIO GPU detected\n")
+		// Configure 640x480x32 framebuffer mode
+		// This is a simplified initialization
+		// Real VirtIO GPU setup requires proper command queue handling
+
+		terminal_write("Framebuffer mode: 640x480x32\n")
+	} else {
+		terminal_write("VirtIO GPU not available, using software rendering only\n")
+	}
 }

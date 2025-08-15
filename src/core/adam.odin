@@ -36,19 +36,23 @@ terminal_clear :: proc() {
 boot_sequence :: proc() {
 	terminal_clear()
 
-	terminal_println("")
-	terminal_println("=== MAGIos Boot Sequence Initiated ===")
-	terminal_println("")
+	clear_back_buffer()
 
-	// terminal_println("CASPER-1 Online")
-	// terminal_println("MELCHIOR-2 Online")
-	// terminal_println("BALTHASAR-3 Online")
+	draw_string("")
+	draw_string("=== MAGIos Boot Sequence Initiated ===")
+	draw_string("")
 
-	count := draw_string("Hello  world!.")
+	draw_string("CASPER-1 Online")
+	draw_string("MELCHIOR-2 Online")
+	draw_string("BALTHASAR-3 Online")
 
-	terminal_println("MAGI System nominal.")
-	terminal_println("God is in his heaven, all is right with the world.")
-	terminal_println("")
+	draw_string("Hello  world!.")
+
+	draw_string("MAGI System nominal.")
+	draw_string("God is in his heaven, all is right with the world.")
+	draw_string("")
+
+	swap_buffers()
 }
 
 foreign _ {
@@ -92,11 +96,21 @@ kernel_main :: proc "c" () {
 	// For RISC-V, we'll implement trap handlers instead of x86 IDT
 	setup_traps()
 
-	terminal_println("KERNEL OK.")
-	terminal_println("MAGI SYNC.")
+	draw_string("KERNEL OK.")
+	draw_string("MAGI SYNC.")
 
 	// Keep kernel running
 	for {
+		if redraw_flag {
+			// Perform buffer swap
+			swap_buffers()
+
+			// Clear back buffer for next frame
+			clear_back_buffer()
+
+			// Reset redraw flag
+			redraw_flag = false
+		}
 		cpu_halt() // Halt until interrupt, then continue loop
 	}
 }

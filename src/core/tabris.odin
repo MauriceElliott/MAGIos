@@ -19,18 +19,52 @@ BUFFER_SIZE :: RES_X * RES_Y
 FBUFFER: [BUFFER_SIZE]u32
 BBUFFER: [BUFFER_SIZE]u32
 
+redraw_flag: bool = false
+
 white :: 0xFFFFFFFF
 black :: 0xFF000000
 
 //font fidelity (16x16)
 BYTES_PER_GLYPH :: 32
 BYTES_FOR_OFFSET :: 32
+VIRTIO_GPU_FB_BASE :: 0x50000000
+
+// Map front buffer to QEMU display memory
+map_framebuffer_to_display :: proc() {
+	// Get pointer to QEMU framebuffer memory region
+	display_fb := cast([^]u32)(uintptr(VIRTIO_GPU_FB_BASE))
+
+	// Copy front buffer to display memory
+	for i in 0 ..< BUFFER_SIZE {
+		display_fb[i] = FBUFFER[i]
+	}
+}
+
+swap_buffers :: proc() {
+	for i in 0 ..< BUFFER_SIZE {
+		FBUFFER[i] = BBUFFER[i]
+	}
+	map_framebuffer_to_display()
+}
+
+//call after frame has been drawn
+clear_back_buffer :: proc() {
+	posy = 40
+	posx = 40
+	for i in 0 ..< BUFFER_SIZE {
+		BBUFFER[i] = black //background colour for now.
+	}
+}
 
 update_pixel :: proc(x: u16, y: u16, colour: u32) {
 	BBUFFER[x + y * RES_X] = colour
 }
 
-draw_rune_with_magic :: proc(character: []u8) {
+new_line :: proc() {
+	posy += 20
+}
+
+draw_character :: proc(character: []u8) {
 	//where in the array are we looking for the bites to draw.
 	byte_offset := 0
 	for i in 0 ..< 16 {
@@ -65,10 +99,15 @@ draw_rune_with_magic :: proc(character: []u8) {
 		//after each row, move down one.
 		posy += 1
 		//reset x to start.
-		posx := start_x
+		posx = start_x
 	}
-	// Need to implement new line.
-	posy := (posy - 16)
+	posx += 16
+	posy = posy - 16
+
+	if posx + 16 >= RES_X {
+		posx = 40 // Reset to left margin
+		posy += 20 // Move to next line
+	}
 }
 
 //Gets byte array from inconsolata array and then runs through the function to draw the string into the back buffer.
@@ -78,9 +117,10 @@ draw_string :: proc(text: string) -> bool {
 		glyph_start := (glyph_index * BYTES_PER_GLYPH) + BYTES_FOR_OFFSET
 
 		if glyph_start + BYTES_PER_GLYPH > len(glyphs.inconsolata_16x16_font) do continue
-		draw_rune_with_magic(
-			glyphs.inconsolata_16x16_font[glyph_start:glyph_start + BYTES_PER_GLYPH],
-		)
+		if character == '\\' && c_index + 1 < len(text) && text[c_index + 1] == 'n' {
+			new_line()
+		}
+		draw_character(glyphs.inconsolata_16x16_font[glyph_start:glyph_start + BYTES_PER_GLYPH])
 	}
 	return true
 }
