@@ -57,6 +57,7 @@ clear_back_buffer :: proc() {
 }
 
 update_pixel :: proc(x: u16, y: u16, colour: u32) {
+	terminal_write("update_pixel being called\n")
 	BBUFFER[x + y * RES_X] = colour
 }
 
