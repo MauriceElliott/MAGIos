@@ -29,15 +29,18 @@ BYTES_PER_GLYPH :: 32
 BYTES_FOR_OFFSET :: 32
 VIRTIO_GPU_FB_BASE :: 0x50000000
 
-// Map front buffer to QEMU display memory
+// Map front buffer to ramfb memory (temporary diagnostic)
 map_framebuffer_to_display :: proc() {
-	// Get pointer to QEMU framebuffer memory region
-	display_fb := cast([^]u32)(uintptr(VIRTIO_GPU_FB_BASE))
+	// ramfb typically gets mapped at a fixed location
+	display_fb := cast([^]u32)(uintptr(0x4000000000)) // Common ramfb address
 
-	// Copy front buffer to display memory
+	cpu_fence()
+
 	for i in 0 ..< BUFFER_SIZE {
 		display_fb[i] = FBUFFER[i]
 	}
+
+	cpu_fence()
 }
 
 swap_buffers :: proc() {
@@ -56,8 +59,19 @@ clear_back_buffer :: proc() {
 	}
 }
 
+//debugging only
+write_framebuffer_into_terminal :: proc() {
+	for y in 0 ..< RES_Y {
+		for x in 0 ..< RES_X {
+			pixel: string = "0"
+			if BBUFFER[(x + y * RES_X)] == black {pixel = "1"} else {pixel = "0"}
+			terminal_write(string(pixel))
+		}
+		terminal_println(" ")
+	}
+}
+
 update_pixel :: proc(x: u16, y: u16, colour: u32) {
-	terminal_write("update_pixel being called\n")
 	BBUFFER[x + y * RES_X] = colour
 }
 

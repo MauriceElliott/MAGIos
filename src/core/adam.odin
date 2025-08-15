@@ -90,6 +90,9 @@ kernel_panic :: proc(message: string) {
 kernel_main :: proc "c" () {
 	context = {}
 
+	terminal_write("KERNEL ENTRY POINT REACHED\n")
+	terminal_write("MAGI SYSTEM INITIALIZING...\n")
+
 	// Run boot sequence
 	boot_sequence()
 

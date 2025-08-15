@@ -134,14 +134,17 @@ setup_virtio_gpu :: proc() {
 
 	gpu_base := cast(^u32)(uintptr(VIRTIO_GPU_BASE))
 	device_id := cpu_read_mmio_32(uintptr(VIRTIO_GPU_BASE + 0x08))
-	if device_id == 0x1050 { 	// The deviceId of the virtual GPU
-		terminal_write("VirtIO GPU detected\n")
-		// Configure 640x480x32 framebuffer mode
-		// This is a simplified initialization
-		// Real VirtIO GPU setup requires proper command queue handling
 
+	terminal_write("VirtIO GPU device ID: ")
+	terminal_write(virtues.stringify(u64(device_id)))
+	terminal_write("\n")
+
+	if device_id == 0x1050 {
+		terminal_write("VirtIO GPU detected\n")
 		terminal_write("Framebuffer mode: 640x480x32\n")
 	} else {
-		terminal_write("VirtIO GPU not available, using software rendering only\n")
+		terminal_write("VirtIO GPU not available (expected 0x1050, got ")
+		terminal_write(virtues.stringify(u64(device_id)))
+		terminal_write(")\n")
 	}
 }
