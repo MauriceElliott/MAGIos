@@ -27,27 +27,11 @@ black :: 0xFF000000
 //font fidelity (16x16)
 BYTES_PER_GLYPH :: 32
 BYTES_FOR_OFFSET :: 32
-VIRTIO_GPU_FB_BASE :: 0x50000000
-
-// Map front buffer to ramfb memory (temporary diagnostic)
-map_framebuffer_to_display :: proc() {
-	// ramfb typically gets mapped at a fixed location
-	display_fb := cast([^]u32)(uintptr(0x4000000000)) // Common ramfb address
-
-	cpu_fence()
-
-	for i in 0 ..< BUFFER_SIZE {
-		display_fb[i] = FBUFFER[i]
-	}
-
-	cpu_fence()
-}
 
 swap_buffers :: proc() {
 	for i in 0 ..< BUFFER_SIZE {
 		FBUFFER[i] = BBUFFER[i]
 	}
-	map_framebuffer_to_display()
 }
 
 //call after frame has been drawn

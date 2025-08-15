@@ -62,9 +62,6 @@ setup_traps :: proc() {
 	// Enable timer interrupts
 	enable_timer_interrupts()
 
-	//Initialize display hardware
-	setup_virtio_gpu()
-
 	terminal_write("RISC-V Trap System Initialized.\n")
 }
 
@@ -123,28 +120,5 @@ handle_timer_interrupt :: proc() {
 	frame_count += 1
 	if frame_count % 60 == 0 {
 		terminal_write("60 frames rendered\n")
-	}
-}
-
-//VIRTIO GPU Setup
-VIRTIO_GPU_BASE :: 0x10008000
-
-setup_virtio_gpu :: proc() {
-	terminal_write("Initializing VirtIO GPU \n")
-
-	gpu_base := cast(^u32)(uintptr(VIRTIO_GPU_BASE))
-	device_id := cpu_read_mmio_32(uintptr(VIRTIO_GPU_BASE + 0x08))
-
-	terminal_write("VirtIO GPU device ID: ")
-	terminal_write(virtues.stringify(u64(device_id)))
-	terminal_write("\n")
-
-	if device_id == 0x1050 {
-		terminal_write("VirtIO GPU detected\n")
-		terminal_write("Framebuffer mode: 640x480x32\n")
-	} else {
-		terminal_write("VirtIO GPU not available (expected 0x1050, got ")
-		terminal_write(virtues.stringify(u64(device_id)))
-		terminal_write(")\n")
 	}
 }
