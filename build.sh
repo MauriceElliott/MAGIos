@@ -151,7 +151,7 @@ run_qemu() {
         -cpu rv64 \
         -smp 1 \
         -m 128M \
-        -device virtio-gpu-pci \
+        -device ramfb \
         -display cocoa \
         -serial stdio \
         -bios default \

@@ -28,10 +28,19 @@ black :: 0xFF000000
 BYTES_PER_GLYPH :: 32
 BYTES_FOR_OFFSET :: 32
 
+RAMFB_BASE :: 0x80000000
+
+map_framebuffer_to_display :: proc() {
+	display_ptr := cast([^]u32)(uintptr(RAMFB_BASE))
+	display_slice := display_ptr[0:BUFFER_SIZE]
+	copy(display_slice, FBUFFER[:])
+}
+
 swap_buffers :: proc() {
 	for i in 0 ..< BUFFER_SIZE {
 		FBUFFER[i] = BBUFFER[i]
 	}
+	map_framebuffer_to_display()
 }
 
 //call after frame has been drawn
