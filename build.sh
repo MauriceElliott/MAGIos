@@ -5,10 +5,19 @@
 set -e
 
 # Build Configuration
-ASM="riscv64-elf-as"
-CC="riscv64-elf-gcc"
-LD="riscv64-elf-ld"
-OBJCOPY="riscv64-elf-objcopy"
+if [[ "$(uname)" == "Linux" ]]; then
+    ASM="riscv64-linux-gnu-as"
+    CC="riscv64-linux-gnu-gcc"
+    LD="riscv64-linux-gnu-ld"
+    OBJCOPY="riscv64-linux-gnu-objcopy"
+    QEMU_DISPLAY="-display gtk"
+else
+    ASM="riscv64-elf-as"
+    CC="riscv64-elf-gcc"
+    LD="riscv64-elf-ld"
+    OBJCOPY="riscv64-elf-objcopy"
+    QEMU_DISPLAY="-display cocoa"
+fi
 ODIN="odin"
 
 # Path Configuration
@@ -42,8 +51,15 @@ check_tools() {
     echo -e "${CYAN}$MAGI_CASPER... Checking RISC-V toolchain${NC}"
 
     local missing_tools=()
+    local toolchain_prefix
 
-    for tool in qemu-system-riscv64 odin riscv64-elf-gcc riscv64-elf-ld riscv64-elf-as riscv64-elf-objcopy; do
+    if [[ "$(uname)" == "Linux" ]]; then
+        toolchain_prefix="riscv64-linux-gnu-"
+    else
+        toolchain_prefix="riscv64-elf-"
+    fi
+
+    for tool in qemu-system-riscv64 odin ${toolchain_prefix}gcc ${toolchain_prefix}ld ${toolchain_prefix}as ${toolchain_prefix}objcopy; do
         if ! command -v $tool &> /dev/null; then
             missing_tools+=($tool)
         fi
@@ -152,7 +168,7 @@ run_qemu() {
         -smp 1 \
         -m 128M \
         -device ramfb \
-        -display cocoa \
+        $QEMU_DISPLAY \
         -serial stdio \
         -bios default \
         -kernel "$KERNEL_ELF"
