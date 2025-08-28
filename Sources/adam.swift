@@ -3,7 +3,7 @@
 
 @MainActor
 @main
-struct MAGIosKernel {
+struct Adam {
     // VGA Text Mode Constants
     static let VGA_BUFFER_ADDRESS: UInt = 0xB8000
     static let VGA_WIDTH: Int = 80
@@ -11,7 +11,7 @@ struct MAGIosKernel {
     static let VGA_DEFAULT_COLOR: UInt8 = 0x0A  // Light green on black
 
     // Demo mode for testing (when not on bare metal)
-    static let DEMO_MODE = true
+    static let DEMO_MODE = false
 
     // Global cursor position
     static var cursorX: Int = 0
@@ -100,7 +100,6 @@ struct MAGIosKernel {
             cursorY = 0
         }
     }
-
     // Scroll screen up by one line
     static func scrollScreen() {
         let buffer = UnsafeMutablePointer<UInt16>(bitPattern: VGA_BUFFER_ADDRESS)!

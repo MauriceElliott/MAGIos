@@ -15,12 +15,13 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "MAGIos",
-            path: "Sources/MAGIos",
-            sources: ["main.swift"],
+            path: "Sources",
+            sources: ["adam.swift"],
             swiftSettings: [
                 .unsafeFlags([
                     "-Xfrontend", "-function-sections",
                     "-Xfrontend", "-gline-tables-only",
+                    "-Xcc", "-ffreestanding",
                     "-parse-as-library",
                 ])
             ]

@@ -309,11 +309,12 @@ elif [ "$1" = "--run" ] || [ "$1" = "" ]; then
 
     # For now, run in demo mode since we don't have bootable kernel yet
     # In the future, this will launch: qemu-system-x86_64 -kernel .build/release/kernel
-    ./.build/release/kernel
+    # After successful build, create kernel binary
+    echo "Creating kernel binary..."
+    objcopy -O binary .build/release/kernel kernel.bin
 
-    echo ""
-    echo "In a full implementation, this would run:"
-    echo "qemu-system-x86_64 -kernel .build/release/kernel -serial stdio"
+    echo "Starting QEMU..."
+    qemu-system-i386 -kernel kernel.bin -serial stdio -display curses
 else
     echo "Usage:"
     echo "  ./build.sh [--run|--test|--clean]"
