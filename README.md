@@ -1,21 +1,35 @@
 # MAGIos
 
-A 64-bit ARM based operating system kernel written in Swift, inspired by the aesthetics and themes of Neon Genesis Evangelion.
-
 ![MAGIos](resources/MAGIos.png)
 
 ## Overview
 
 MAGIos is experimental. It is a conduit for me to learn how an OS works as well as giving me an outlet for creativity.
 
-Currently I am making this as a terminal type application, possibly something that could run under WSL on Windows. Eventually I would like to make a GUI library, something that fits the 90s anime theme. But the thing is this isn't just about the aesthetics of the externally facing application, this is also about the codebase, so as you can probably see, the kernel file being called adam, and the interrupt system being called lilith make this less than ideal as a learning device for others. Because of this, I have done my best to leave as many comments with as much details as is possible.
+## Core design principal
 
-## Features
+No pomp, only simplicity, no over engineering, only verbosity, no elegance, only robustness.
+The point of this project is to learn and understand OS development, some of it will end up being complex of course, but we can strive to make it as easily understandable as possible in any way we can, that is the goal. Beautifully straight forward overly verbose, robust and commented code that I can read back in a couple years time and still understand.
 
-- **Pure Odin Implementation**: Kernel logic written entirely in Odin with minimal assembly bootstrap
-- **ARM 64-bit Architecture**: Modern, clean instruction set
-- **Evangelion Theming**: Designed to mimic the MAGI system as that aspect of Evangelion has always fascinated me
-- **Cross-Platform Build**: Supports macOS and Linux development environments
+## Core design
+
+- Embedded Swift + Assembly only, no C.
+- 64 bit x86_64
+- Package.swift First, build.sh second
+- Buildable on macOS or Void Linux (My main machines)
+- Qemu emulated for the duration of development
+
+## Main objectives in order
+
+1. Kernal Boot Message -- Only this for now
+2. Interupt System
+3. Memory Management
+4. Process Management
+5. File System
+   -- Future after research, use VGA graphics for everything up til here.
+6. Graphics
+7. User Interface
+8. Networking
 
 ## Build and Run
 
