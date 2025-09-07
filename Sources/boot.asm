@@ -23,6 +23,6 @@ extern swift_kernel_main
 
 _start:
     mov esp, stack_top
-    call swift_kernel_main
+    call Adam
     cli
     hlt

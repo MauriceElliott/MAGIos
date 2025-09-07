@@ -4,7 +4,16 @@
 // As little as possible should be defined here.
 // This is only for the truely important.
 
+
 public func Wake() {
-//
-//    print("Hello World")
+   print("Hello World")
+}
+
+
+@_cdecl("Adam_main")
+public func kernel() -> Never {
+    Wake()
+    while true {
+        //halt
+    }
 }
