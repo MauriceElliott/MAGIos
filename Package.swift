@@ -15,6 +15,7 @@ let package = Package(
             name: "Plug",
             dependencies: ["Core"],
             swiftSettings: [
+                .enableExperimentalFeature("Embedded"),
                 .unsafeFlags(["-parse-as-library"])
             ],
         ),

@@ -5,5 +5,6 @@
 // This is only for the truely important.
 
 public func Wake() {
-    print("Hello World")
+//
+//    print("Hello World")
 }
