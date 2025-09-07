@@ -19,6 +19,12 @@ The point of this project is to learn and understand OS development, some of it 
 - Buildable on macOS or Void Linux (My main machines)
 - Qemu emulated for the duration of development
 
+## The MAGI
+
+In evangelion the three MAGI are three super computers that work in tandem to provide operational function to NERV and provide other things like unbiased decision making for the greater good of humanity. Each of the MAGI is are based on different aspects of its creator, Dr. Naoko Akagi. Casper is her as a woman, Balthasar is her as a mother, and Melchior is her as a scientist.
+I have not yet fully decided how to implement this but while writing a card for my wife's birthday I realised I had split it into three sections, describing her as firstly a Woman of Faith, then a Woman of Learning, and then her as a mother and a carer.
+It would bring me great pleasure to keep these in mind when building MAGIos. We will have to wait and see how that is actually implemented, but either way I look forward to having her be a part of it.
+
 ## Main objectives in order
 
 1. Kernal Boot Message -- Only this for now
