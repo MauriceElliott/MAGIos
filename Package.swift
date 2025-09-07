@@ -14,7 +14,15 @@ let package = Package(
             name: "Adam",
             swiftSettings: [
                 .enableExperimentalFeature("Embedded"),
-                .unsafeFlags(["-parse-as-library"])
+                .unsafeFlags(
+                [
+                    "-target", "x86_64-unknown-linux-gnu",
+                    "-Xfrontend", "-disable-objc-interop",
+                    "-Xfrontend", "-function-sections",
+                    "-wmo",
+                    // "-c",
+                    "-emit-object",
+                ]),
             ],
         ),
     ]

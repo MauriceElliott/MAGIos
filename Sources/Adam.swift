@@ -10,8 +10,7 @@ public func Wake() {
 }
 
 
-@_cdecl("Adam_main")
-public func kernel() -> Never {
+public func main() -> Never {
     Wake()
     while true {
         //halt
