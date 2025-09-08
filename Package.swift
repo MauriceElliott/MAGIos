@@ -5,12 +5,9 @@ import PackageDescription
 
 let package = Package(
     name: "MAGIos",
-    products: [
-        .executable(name: "MAGIos", targets: ["Adam"]),
-    ],
     targets: [
         //The MAGI themselves, the OS that holds the loose tendrils of society together.
-        .executableTarget(
+        .target(
             name: "Adam",
             swiftSettings: [
                 .enableExperimentalFeature("Embedded"),
@@ -21,7 +18,7 @@ let package = Package(
                     "-Xfrontend", "-function-sections",
                     "-wmo",
                     "-c",
-                    "-o adam.o",
+                    "-emit-object",
                 ]),
             ],
         ),
