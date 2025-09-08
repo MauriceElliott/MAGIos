@@ -31,4 +31,4 @@ fi
 
 echo "Kernel built successfully!"
 echo "Running kernel in QEMU..."
-qemu-system-x86_64 -kernel .build/kernel.bin
+qemu-system-x86_64 -kernel .build/kernel.bin -serial stdio -no-reboot -no-shutdown
