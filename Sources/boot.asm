@@ -19,10 +19,10 @@ stack_top:
 
 section .text
 global _start
-extern swift_kernel_main
+extern kernel_main
 
 _start:
     mov esp, stack_top
-    call Adam
+    call kernel_main
     cli
     hlt
