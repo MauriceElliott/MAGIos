@@ -7,7 +7,7 @@ mkdir -p .build
 rm -f .build/kernel.bin .build/boot.o
 
 echo "Building Swift kernel..."
-swift build -c release
+swift build -c release --triple riscv64-unkown-elf -Xswiftc "-freestanding"
 
 echo "Assembling boot code..."  
 # Assemble the boot code into .build directory
@@ -20,9 +20,10 @@ fi
 
 echo "Linking kernel..."
 # Find the Swift object files
-SWIFT_OBJS=$(find .build -name "*.o" -path "*/Adam.build/*")
+SWIFT_OBJS=$(find .build/riscv64-unkown-elf/release -name "*.o")
 # Link everything together into .build directory
-ld.lld -T Sources/Pattern/linker.ld -o .build/kernel.bin .build/boot.o $SWIFT_OBJS
+
+riscv-unknown-elf-ld -T Sources/Pattern/linker.ld -o .build/kernel.bin .build/boot.o $SWIFT_OBJS
 
 if [ $? -ne 0 ]; then
     echo "Linking failed!"
@@ -31,4 +32,4 @@ fi
 
 echo "Kernel built successfully!"
 echo "Running kernel in QEMU..."
-qemu-system-x86_64 -kernel .build/kernel.bin -serial stdio -no-reboot -no-shutdown
+qemu-system-riscv64 -kernel .build/kernel.bin -serial stdio -no-reboot -no-shutdown
