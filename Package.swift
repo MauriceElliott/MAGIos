@@ -9,6 +9,7 @@ let package = Package(
         //The MAGI themselves, the OS that holds the loose tendrils of society together.
         .target(
             name: "Adam",
+            path: "Sources/Core/",
             swiftSettings: [
                 .enableExperimentalFeature("Embedded"),
                 .unsafeFlags(

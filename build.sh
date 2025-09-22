@@ -11,7 +11,7 @@ swift build -c release
 
 echo "Assembling boot code..."  
 # Assemble the boot code into .build directory
-riscv64-unknown-elf-as Sources/boot.S -o .build/boot.o
+riscv64-unknown-elf-as Sources/Pattern/boot.s -o .build/boot.o
 
 if [ $? -ne 0 ]; then
     echo "Assembly failed!"
@@ -22,7 +22,7 @@ echo "Linking kernel..."
 # Find the Swift object files
 SWIFT_OBJS=$(find .build -name "*.o" -path "*/Adam.build/*")
 # Link everything together into .build directory
-ld -T Sources/linker.ld -o .build/kernel.bin .build/boot.o $SWIFT_OBJS
+ld -T Sources/Pattern/linker.ld -o .build/kernel.bin .build/boot.o $SWIFT_OBJS
 
 if [ $? -ne 0 ]; then
     echo "Linking failed!"
