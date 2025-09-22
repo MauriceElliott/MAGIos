@@ -22,7 +22,7 @@ echo "Linking kernel..."
 # Find the Swift object files
 SWIFT_OBJS=$(find .build -name "*.o" -path "*/Adam.build/*")
 # Link everything together into .build directory
-ld -T Sources/Pattern/linker.ld -o .build/kernel.bin .build/boot.o $SWIFT_OBJS
+ld.lld -T Sources/Pattern/linker.ld -o .build/kernel.bin .build/boot.o $SWIFT_OBJS
 
 if [ $? -ne 0 ]; then
     echo "Linking failed!"
