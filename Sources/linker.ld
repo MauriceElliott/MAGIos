@@ -1,21 +1,30 @@
+OUTPUT_ARCH(riscv)
+
 ENTRY(_start)
 
 SECTIONS
 {
-    . = 1M;
+    . = 0x80000000;
 
-    .multiboot_header :
-    {
-        *(.multiboot_header)
-    }
-
-    .text : ALIGN(4K)
-    {
+    .text : {
+        *(.text.boot)
         *(.text)
     }
 
-    .bss : ALIGN(4K)
-    {
-        *(.bss)
+    .rodata : {
+        *(.rodata*)
     }
+
+    .data : {
+        *(.data*)
+    }
+
+    .bss : {
+        *(.bss*)
+        *(COMMON)
+    }
+
+    . = ALIGN(16);
+
+    _stack_top = . + 0x10000; /* 64kb stack */
 }

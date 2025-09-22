@@ -13,12 +13,14 @@ let package = Package(
                 .enableExperimentalFeature("Embedded"),
                 .unsafeFlags(
                 [
-                    "-target", "x86_64-unknown-linux-gnu",
+                    "-target", "riscv64-none-none-eabi",
                     "-Xfrontend", "-disable-objc-interop",
                     "-Xfrontend", "-function-sections",
+                    "-Xfrontend", "-disable-stack-protector",
                     "-wmo",
                     "-c",
                     "-emit-object",
+                    //"-nostdlib" //Not sure if this is required, we will see. It is recommended.
                 ]),
             ],
         ),

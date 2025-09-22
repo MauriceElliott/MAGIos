@@ -11,7 +11,7 @@ swift build -c release
 
 echo "Assembling boot code..."  
 # Assemble the boot code into .build directory
-nasm -f elf64 Sources/boot.asm -o .build/boot.o
+riscv64-unknown-elf-as Sources/boot.S -o .build/boot.o
 
 if [ $? -ne 0 ]; then
     echo "Assembly failed!"
