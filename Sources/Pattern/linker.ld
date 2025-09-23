@@ -4,7 +4,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x80000000;
+    . = 0x80200000; /* Changed from 800000000 to avoid quemu collision with openSBI*/
 
     .text : {
         *(.text.boot)

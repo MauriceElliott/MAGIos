@@ -19,10 +19,8 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Linking kernel..."
-# Find the Swift object files
 SWIFT_OBJS=$(find .build/riscv64-unkown-elf/release -name "*.o")
-# Link everything together into .build directory
-
+# Run Linker
 riscv64-unknown-elf-ld -T Sources/Pattern/linker.ld -o .build/kernel.bin .build/boot.o $SWIFT_OBJS
 
 if [ $? -ne 0 ]; then
@@ -31,5 +29,5 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Kernel built successfully!"
-echo "Running kernel in QEMU..."
-qemu-system-riscv64 -kernel .build/kernel.bin -serial stdio -no-reboot -no-shutdown
+echo "Running kernel in Qemu"
+qemu-system-riscv64 -machine virt -kernel .build/kernel.bin -serial stdio -no-reboot -no-shutdown
