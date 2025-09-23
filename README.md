@@ -1,6 +1,6 @@
 # MAGIos
 
-![MAGIos](resources/logo.jpeg)
+![MAGIos](resources/MAGIos.png)
 
 ## Overview
 
