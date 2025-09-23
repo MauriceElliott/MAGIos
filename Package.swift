@@ -10,6 +10,9 @@ let package = Package(
         .target(
             name: "Adam",
             path: "Sources/Core/",
+            cSettings: [
+                .unsafeFlags(["-mabi=lp64d"]),
+            ],
             swiftSettings: [
                 .enableExperimentalFeature("Embedded"),
                 .unsafeFlags(
@@ -21,8 +24,10 @@ let package = Package(
                     "-wmo",
                     "-c",
                     "-emit-object",
-                    //"-nostdlib" //Not sure if this is required, we will see. It is recommended.
                 ]),
+            ],
+            linkerSettings: [
+                .unsafeFlags(["-mabi=lp64d"]),
             ],
         ),
     ]
