@@ -3,7 +3,7 @@
 // This is the Terminal Dogma of MAGIos.
 // As little as possible should be defined here.
 
-public func printChunkToUart(_ string: String){
+public func printChunkToUart(_ bytes: UnsafeBufferPointer<UInt8>){
     let uart_out_register: UnsafeMutablePointer<UInt8> = UnsafeMutablePointer(bitPattern: 0x10000000)!
     let uart_line_status_register: UnsafePointer<UInt8> = UnsafePointer(bitPattern: 0x10000005)!
 
@@ -12,20 +12,28 @@ public func printChunkToUart(_ string: String){
         for _ in 0..<100 { /* small delay */ }
         uart_out_register.pointee = character
     }
-    for byte in string.utf8 {
+    for byte in bytes {
         putChar(byte)
     }
 }
 
-public func printLine(_ string: String) {
-    let bytes = Array(string.utf8)
+public func printLine(_ string: StaticString) {
+    let totalBytes = string.utf8CodeUnitCount
+    let bytesPtr = string.utf8Start
     let chunkSize = 14
-    printChunkToUart(string)
-    for i in stride(from: 0, to: bytes.count, by: chunkSize) {
-        let endIndex = min(i + chunkSize, bytes.count)
-        let chunk = bytes[i..<endIndex]
-        let chunkString = String(validating: chunk, as: UTF8.self) ?? ""
-        printChunkToUart(chunkString)
+
+    var offset = 0
+    while offset < totalBytes {
+        let remainingBytes = totalBytes - offset
+        let currentChunkSize = remainingBytes < chunkSize ? remainingBytes : chunkSize
+
+        let chunkBuffer = UnsafeBufferPointer(
+            start: bytesPtr.advanced(by: offset),
+            count: currentChunkSize
+        )
+
+        printChunkToUart(chunkBuffer)
+        offset += currentChunkSize
     }
 }
 
@@ -50,29 +58,25 @@ public func printLine(_ string: String) {
 
 
 public func bootMessage() {
-    printLine("============================================================")
-    printLine("================ Entering Central Dogma ====================")
-    printLine("============================================================")
+    printLine("============================================================\n")
+    printLine("================ Entering Central Dogma ====================\n")
+    printLine("============================================================\n")
 
     printLine("\n")
-    printLine("BAL Boot Successful...initiating MEL boot sequence...")
-    printLine("")
-    printLine("MEL Boot Successful...initiating CAS boot sequence...")
-    printLine("")
-    printLine("CAS Boot Successful....")
-    printLine("All MAGI Have come online....")
-    printLine("MAGI Sync Initiated....")
+    printLine("BAL Boot Successful...initiating MEL boot sequence...\n")
     printLine("\n")
-    printLine("Syncronisation Complete, all systems Nominal")
-    printLine("\n\n Good Morning Professor")
+    printLine("MEL Boot Successful...initiating CAS boot sequence...\n")
+    printLine("\n")
+    printLine("CAS Boot Successful....\n")
+    printLine("All MAGI Have come online....\n")
+    printLine("MAGI Sync Initiated....\n")
+    printLine("\n")
+    printLine("Syncronisation Complete, all systems Nominal\n")
+    printLine("\n\n Good Morning Professor\n")
 }
 
 @_cdecl("kernel_main")
 public func kernel_main() -> Never {
-    // bootMessage()
-    // printLine2("hello2")
-    // printChunkToUart("Hello")
-    printLine("Hello World!!!")// Max limit for 1 chunk
-    // printLine("Hello World!!!!")//Overflow into second chunk
+    bootMessage()
     while true {}
 }
