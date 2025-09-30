@@ -60,3 +60,8 @@ public func kernel_main() -> Never {
     bootMessage()
     while true {}
 }
+
+
+/*
+30-09-25 - Converted from using String type to StaticString as the strings I was using were causing uneccessary complexity.
+*/
