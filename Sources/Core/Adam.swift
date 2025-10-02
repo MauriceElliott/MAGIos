@@ -3,7 +3,7 @@
 // This is the Terminal Dogma of MAGIos.
 // As little as possible should be defined here.
 
-public func printChunkToUart(_ bytes: UnsafeBufferPointer<UInt8>){
+private func printChunkToUart(_ bytes: UnsafeBufferPointer<UInt8>){
     let uart_out_register: UnsafeMutablePointer<UInt8> = UnsafeMutablePointer(bitPattern: 0x10000000)!
     let uart_line_status_register: UnsafePointer<UInt8> = UnsafePointer(bitPattern: 0x10000005)!
 
@@ -57,7 +57,9 @@ public func bootMessage() {
 
 @_cdecl("kernel_main")
 public func kernel_main() -> Never {
+    
     bootMessage()
+    setTraps()
     while true {}
 }
 
