@@ -51,5 +51,5 @@ let CLINT_MTIMECMP = CLINT_BASE + 0x4000
 
 //Guess its a start of sorts?
 public func setTraps() {
-    print("Setting up traps")
+    uartPrint("Setting up traps")
 }
