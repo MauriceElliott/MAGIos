@@ -41,16 +41,22 @@ public func free(_ ptr: UnsafeMutableRawPointer?) {
     // returns: nothing
 }
 
+let UART = (
+    transmit_register: 0x10000000,
+    reciever_register: 0x10000000,
+    status_register: 0x10000005,
+    interrupt_toggle: 0x10000001
+)
 
 //Uart serial port output
 private func printChunkToUart(_ bytes: UnsafeBufferPointer<UInt8>){
-    let uart_out_register: UnsafeMutablePointer<UInt8> = UnsafeMutablePointer(bitPattern: 0x10000000)!
-    let uart_line_status_register: UnsafePointer<UInt8> = UnsafePointer(bitPattern: 0x10000005)!
+    let uart_transmit: UnsafeMutablePointer<UInt8> = UnsafeMutablePointer(bitPattern: UART.transmit_register)!
+    let uart_status: UnsafePointer<UInt8> = UnsafePointer(bitPattern: UART.status_register)!
 
     func putChar(_ character: UInt8) {
-        while (uart_line_status_register.pointee & 0x20) == 0 { /*wait for uart to be ready for next character*/ }
+        while (uart_status.pointee & 0x20) == 0 { /*wait for uart to be ready for next character*/ }
         for _ in 0..<100 { /* small delay */ }
-        uart_out_register.pointee = character
+        uart_transmit.pointee = character
     }
     for byte in bytes {
         putChar(byte)
