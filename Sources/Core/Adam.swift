@@ -22,9 +22,9 @@ public func bootMessage() {
 }
 
 @_cdecl("kernel_main")
-public func kernel_main() -> Never {
+public func KernelMain() -> Never {
     
     bootMessage()
-    setTraps()
+    cSetTraps()
     while true {}
 }

@@ -2,7 +2,7 @@
 // Maurice Elliott 20251002
 // This is the NERVous System that send the messages round the MAGI.
 
-private struct TrapFrame {
+public struct TrapFrame {
 	// General-purpose registers x1-x31 (x0 is always 0)
 	let ra:     UInt64 // x1 - Return address
 	let sp:     UInt64 // x2 - Stack pointer
@@ -49,7 +49,37 @@ let CLINT_BASE = 0x02000000
 let CLINT_MTIME = CLINT_BASE + 0xBFF8
 let CLINT_MTIMECMP = CLINT_BASE + 0x4000
 
+@_silgen_name("set_trap_vector")
+private func asmSetTrapVector()
+@_silgen_name("enable_timer_interrupts")
+private func asmEnableTimerInterrupts()
+@_silgen_name("get_time")
+private func asmGetGime()
+@_silgen_name("set_timer")
+private func asmSetTimer()
+@_silgen_name("trap_vector")
+private func asmTrapVector()
+
+
+let isAnInterruptAddr: UInt64 = 0x8000000000000000
+let causeCodeAddr: UInt64 = 0x7FFFFFFFFFFFFFFF
+
+@_cdecl("trap_handler")
+public func cTrapHandler(_ framePtr: UnsafeMutableRawPointer) {
+	let frame = framePtr.assumingMemoryBound(to: TrapFrame.self).pointee
+
+	// Check that the passed frame is actually an interrupt
+	// Extract interrupt bit 63 and cause code (62-0)
+	let isInterrupt = (frame.cause & isAnInterruptAddr) != 0
+	let causeCode = frame.cause & causeCodeAddr
+
+	if isInterrupt {
+		switch causeCode {
+			default: uartPrint("UnkownInterrupt: ")
+		}
+	}
+}
 //Guess its a start of sorts?
-public func setTraps() {
+public func cSetTraps() {
     uartPrint("Setting up traps")
 }
