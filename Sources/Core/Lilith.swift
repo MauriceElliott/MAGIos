@@ -49,16 +49,16 @@ let UART = (
 )
 
 private struct MutBytePtr {
-    let val: UnsafeMutablePointer<UInt8>
+    let ptr: UnsafeMutablePointer<UInt8>
     init(_ ptr: UnsafeMutablePointer<UInt8>) {
-        self.val = ptr
+        self.ptr = ptr
     }
 }
 
 private struct ConstBytePtr {
-    let val: UnsafePointer<UInt8>
+    let ptr: UnsafePointer<UInt8>
     init(_ ptr: UnsafePointer<UInt8>) {
-        self.val = ptr
+        self.ptr = ptr
     }
 }
 
@@ -68,9 +68,9 @@ private func printChunkToUart(_ bytes: UnsafeBufferPointer<UInt8>){
     let uart_status = ConstBytePtr(UnsafePointer(bitPattern: UART.status_register)!)
 
     func putChar(_ character: UInt8) {
-        while (uart_status.val.pointee & 0x20) == 0 { /*wait for uart to be ready for next character*/ }
+        while (uart_status.ptr.pointee & 0x20) == 0 { /*wait for uart to be ready for next character*/ }
         for _ in 0..<100 { /* small delay */ }
-        uart_transmit.val.pointee = character
+        uart_transmit.ptr.pointee = character
     }
     for byte in bytes {
         putChar(byte)
