@@ -48,15 +48,29 @@ let UART = (
     interrupt_toggle: 0x10000001
 )
 
+private struct MutBytePtr {
+    let val: UnsafeMutablePointer<UInt8>
+    init(_ ptr: UnsafeMutablePointer<UInt8>) {
+        self.val = ptr
+    }
+}
+
+private struct ConstBytePtr {
+    let val: UnsafePointer<UInt8>
+    init(_ ptr: UnsafePointer<UInt8>) {
+        self.val = ptr
+    }
+}
+
 //Uart serial port output
 private func printChunkToUart(_ bytes: UnsafeBufferPointer<UInt8>){
-    let uart_transmit: UnsafeMutablePointer<UInt8> = UnsafeMutablePointer(bitPattern: UART.transmit_register)!
-    let uart_status: UnsafePointer<UInt8> = UnsafePointer(bitPattern: UART.status_register)!
+    let uart_transmit = MutBytePtr(UnsafeMutablePointer(bitPattern: UART.transmit_register)!)
+    let uart_status = ConstBytePtr(UnsafePointer(bitPattern: UART.status_register)!)
 
     func putChar(_ character: UInt8) {
-        while (uart_status.pointee & 0x20) == 0 { /*wait for uart to be ready for next character*/ }
+        while (uart_status.val.pointee & 0x20) == 0 { /*wait for uart to be ready for next character*/ }
         for _ in 0..<100 { /* small delay */ }
-        uart_transmit.pointee = character
+        uart_transmit.val.pointee = character
     }
     for byte in bytes {
         putChar(byte)
