@@ -46,6 +46,7 @@ public struct TrapFrame {
 final class CallbackHandlerRegistry {
 	public var timerHandler: (() -> Void)?
 	public var externalHandler: (() -> Void)?
+	public var timerTickCount: UInt64 = 0
 }
 
 // Timer interrupt setup
@@ -58,9 +59,9 @@ private func asmSetTrapVector()
 @_silgen_name("enable_timer_interrupts")
 private func asmEnableTimerInterrupts()
 @_silgen_name("get_time")
-private func asmGetGime()
+private func asmGetTime() -> Int
 @_silgen_name("set_timer")
-private func asmSetTimer()
+private func asmSetTimer(_ ticks: Int)
 @_silgen_name("trap_vector")
 private func asmTrapVector()
 
@@ -94,6 +95,19 @@ public func trapHandler(_ framePtr: UnsafeMutableRawPointer) {
 	}
 }
 
+let TIMER_INTERVAL = 10000000 //10ms
+
+private func timerInterruptHandler() {
+	CallbackHandlerRegistry().timerTickCount += 1
+
+	if CallbackHandlerRegistry().timerTickCount % 100 == 0 {
+		uartPrint("tick tock")
+	}
+
+	let currentTime = asmGetTime()
+	let nextTime = currentTime + TIMER_INTERVAL
+	asmSetTimer(nextTime)
+}
 
 private func initTimerHandler() {
 	uartPrint("Initialise Timer Handlers")
