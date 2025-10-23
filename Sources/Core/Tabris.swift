@@ -43,6 +43,10 @@ public struct TrapFrame {
 	let status: UInt64 // Status register (mstatus)
 }
 
+final class CallbackHandlerRegistry {
+	public var timerHandler: (() -> Void)?
+	public var externalHandler: (() -> Void)?
+}
 
 // Timer interrupt setup
 let CLINT_BASE = 0x02000000
@@ -65,7 +69,7 @@ let isAnInterruptAddr: UInt64 = 0x8000000000000000
 let causeCodeAddr: UInt64 = 0x7FFFFFFFFFFFFFFF
 
 @_cdecl("trap_handler")
-public func cTrapHandler(_ framePtr: UnsafeMutableRawPointer) {
+public func trapHandler(_ framePtr: UnsafeMutableRawPointer) {
 	let frame = framePtr.assumingMemoryBound(to: TrapFrame.self).pointee
 
 	// Check that the passed frame is actually an interrupt
@@ -75,11 +79,38 @@ public func cTrapHandler(_ framePtr: UnsafeMutableRawPointer) {
 
 	if isInterrupt {
 		switch causeCode {
+			case 5: //Timer interrupt
+				if let handler = CallbackHandlerRegistry().timerHandler {
+					handler()
+				}
+			case 9: //External interrupt (PLIC)
+				if let handler = CallbackHandlerRegistry().externalHandler {
+					handler()
+				}
 			default: uartPrint("UnkownInterrupt: ")
 		}
+	} else {
+		uartPrint("Possible exception thrown.")
 	}
 }
-//Guess its a start of sorts?
-public func cSetTraps() {
-    uartPrint("Setting up traps")
+
+
+private func initTimerHandler() {
+	uartPrint("Initialise Timer Handlers")
+}
+
+public func setTraps() {
+	uartPrint("Setting Traps\n")
+
+	//Installing the trap vector which points the CPU to the trap vector assembly.
+	asmSetTrapVector()
+	uartPrint("Trap vector set\n")
+
+	//Enable timer interrupts and global interrupts. From this point onwards we scramble to get this system under control.
+	asmEnableTimerInterrupts()
+	uartPrint("Enabled Timer Interrupts\n")
+
+	//Initialise the Timer Interrupt handler at 10ms (100hz) to make the system a little more manageable.
+	initTimerHandler()
+	uartPrint("Timer handler initialised.\n")
 }

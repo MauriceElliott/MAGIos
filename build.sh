@@ -12,6 +12,7 @@ swift build -c release --triple riscv64-unkown-elf
 echo "Assembling boot code..."  
 # Assemble the boot code into .build directory
 riscv64-unknown-elf-as Sources/Pattern/boot.s -o .build/boot.o
+riscv64-unknown-elf-as Sources/Pattern/interrupts.s -o .build/interrupts.o
 
 if [ $? -ne 0 ]; then
     echo "Assembly failed!"
@@ -21,7 +22,7 @@ fi
 echo "Linking kernel..."
 SWIFT_OBJS=$(find .build/riscv64-unkown-elf/release -name "*.o")
 # Run Linker
-riscv64-unknown-elf-ld -T Sources/Pattern/linker.ld -o .build/kernel.bin .build/boot.o $SWIFT_OBJS
+riscv64-unknown-elf-ld -T Sources/Pattern/linker.ld -o .build/kernel.bin .build/boot.o .build/interrupts.o $SWIFT_OBJS
 
 if [ $? -ne 0 ]; then
     echo "Linking failed!"

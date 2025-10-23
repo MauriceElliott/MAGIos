@@ -39,7 +39,7 @@ set_timer:
 .align 4
 trap_vector:
     # Save context to stack (simplified for now)
-    addi sp, sp, -256 # Space for TrapFrame
+    addi sp, sp, -288 # Space for TrapFrame (36 registers × 8 bytes)
 
     # Save all registers to TrapFrame on stack
     sd ra, 0(sp)
@@ -126,7 +126,7 @@ trap_vector:
     ld t5, 232(sp)
     ld t6, 240(sp)
 
-    addi sp, sp, 256 # Restore stack pointer
+    addi sp, sp, 288 # Restore stack pointer
 
     sret # Return from trap
 

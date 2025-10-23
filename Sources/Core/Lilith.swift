@@ -69,8 +69,8 @@ private func printChunkToUart(_ bytes: UnsafeBufferPointer<UInt8>){
 
     func putChar(_ character: UInt8) {
         while (uart_status.ptr.pointee & 0x20) == 0 { /*wait for uart to be ready for next character*/ }
-        for _ in 0..<100 { /* small delay */ }
         uart_transmit.ptr.pointee = character
+        while (uart_status.ptr.pointee & 0x20) == 0 { /*wait for transmission complete*/ }
     }
     for byte in bytes {
         putChar(byte)
@@ -80,7 +80,7 @@ private func printChunkToUart(_ bytes: UnsafeBufferPointer<UInt8>){
 public func uartPrint(_ string: StaticString) {
     let totalBytes = string.utf8CodeUnitCount
     let bytesPtr = string.utf8Start
-    let chunkSize = 14
+    let chunkSize = 16
 
     var offset = 0
     while offset < totalBytes {

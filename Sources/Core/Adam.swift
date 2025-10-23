@@ -18,13 +18,15 @@ public func bootMessage() {
     uartPrint("MAGI Sync Initiated....\n")
     uartPrint("\n")
     uartPrint("Syncronisation Complete, all systems Nominal\n")
-    uartPrint("\n\n Good Morning Professor\n")
+    uartPrint("\n\nGood Morning Professor\n")
 }
 
 @_cdecl("kernel_main")
 public func KernelMain() -> Never {
     
     bootMessage()
-    cSetTraps()
-    while true {}
+    setTraps()
+
+    while true {
+    }
 }
