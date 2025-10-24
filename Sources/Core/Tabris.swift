@@ -43,11 +43,13 @@ public struct TrapFrame {
 	let status: UInt64 // Status register (mstatus)
 }
 
-final class CallbackHandlerRegistry {
+final class CallbackHandlerRegistry: @unchecked Sendable {
 	public var timerHandler: (() -> Void)?
 	public var externalHandler: (() -> Void)?
 	public var timerTickCount: UInt64 = 0
 }
+
+private let handlerRegistry = CallbackHandlerRegistry()
 
 // Timer interrupt setup
 let CLINT_BASE = 0x02000000
@@ -64,7 +66,6 @@ private func asmGetTime() -> Int
 private func asmSetTimer(_ ticks: Int)
 @_silgen_name("trap_vector")
 private func asmTrapVector()
-
 
 let isAnInterruptAddr: UInt64 = 0x8000000000000000
 let causeCodeAddr: UInt64 = 0x7FFFFFFFFFFFFFFF
@@ -101,7 +102,7 @@ private func timerInterruptHandler() {
 	CallbackHandlerRegistry().timerTickCount += 1
 
 	if CallbackHandlerRegistry().timerTickCount % 100 == 0 {
-		uartPrint("tick tock")
+		uartPrint("tick tock\n")
 	}
 
 	let currentTime = asmGetTime()
@@ -110,7 +111,15 @@ private func timerInterruptHandler() {
 }
 
 private func initTimerHandler() {
-	uartPrint("Initialise Timer Handlers")
+	uartPrint("Initialise Timer Handlers\n")
+
+	handlerRegistry.timerHandler = timerInterruptHandler
+
+	let currentTime = asmGetTime()
+	let firstInterrupt = currentTime + TIMER_INTERVAL
+	asmSetTimer(firstInterrupt)
+
+	uartPrint("Timer Handlers Initialized\n")
 }
 
 public func setTraps() {
@@ -120,11 +129,12 @@ public func setTraps() {
 	asmSetTrapVector()
 	uartPrint("Trap vector set\n")
 
+	//Initialise the Timer Interrupt handler at 10ms (100hz) to make the system a little more manageable.
+	initTimerHandler()
+	uartPrint("Timer handler initialised.\n")
+
 	//Enable timer interrupts and global interrupts. From this point onwards we scramble to get this system under control.
 	asmEnableTimerInterrupts()
 	uartPrint("Enabled Timer Interrupts\n")
 
-	//Initialise the Timer Interrupt handler at 10ms (100hz) to make the system a little more manageable.
-	initTimerHandler()
-	uartPrint("Timer handler initialised.\n")
 }

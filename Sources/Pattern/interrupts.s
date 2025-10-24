@@ -84,7 +84,7 @@ trap_vector:
     csrr t0, sstatus
     sd t0, 272(sp) # status
 
-    # Call Odin trap handler with frame pointer
+    # Call trap handler with frame pointer
     mv a0, sp
     call trap_handler
 
