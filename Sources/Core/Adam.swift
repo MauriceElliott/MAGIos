@@ -4,6 +4,7 @@
 // As little as possible should be defined here.
 
 public func bootMessage() {
+    uartPrint("\n\n\n")
     uartPrint("============================================================\n")
     uartPrint("================ Entering Central Dogma ====================\n")
     uartPrint("============================================================\n")
@@ -26,6 +27,8 @@ public func KernelMain() -> Never {
     
     bootMessage()
     setTraps()
+
+    uartPrint("Debugggg")
 
     while true {
     }

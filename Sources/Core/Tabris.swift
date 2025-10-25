@@ -89,18 +89,20 @@ public func trapHandler(_ framePtr: UnsafeMutableRawPointer) {
 				if let handler = CallbackHandlerRegistry().externalHandler {
 					handler()
 				}
-			default: uartPrint("UnkownInterrupt: ")
+			default: uartPrint("UnkownInterrupt: \n")
 		}
 	} else {
-		uartPrint("Possible exception thrown.")
+		uartPrint("Possible exception thrown\n")
 	}
 }
 
 let TIMER_INTERVAL = 10000000 //10ms
 
 private func timerInterruptHandler() {
+	uartPrint("debug 5\n")
 	CallbackHandlerRegistry().timerTickCount += 1
 
+	uartPrint("debug 6\n")
 	if CallbackHandlerRegistry().timerTickCount % 100 == 0 {
 		uartPrint("tick tock\n")
 	}
@@ -114,11 +116,14 @@ private func initTimerHandler() {
 	uartPrint("Initialise Timer Handlers\n")
 
 	handlerRegistry.timerHandler = timerInterruptHandler
+	uartPrint("debug 1\n")
 
 	let currentTime = asmGetTime()
+	uartPrint("debug 2\n")
 	let firstInterrupt = currentTime + TIMER_INTERVAL
+	uartPrint("debug 3\n")
 	asmSetTimer(firstInterrupt)
-
+	uartPrint("debug 4\n")
 	uartPrint("Timer Handlers Initialized\n")
 }
 
@@ -131,7 +136,7 @@ public func setTraps() {
 
 	//Initialise the Timer Interrupt handler at 10ms (100hz) to make the system a little more manageable.
 	initTimerHandler()
-	uartPrint("Timer handler initialised.\n")
+	uartPrint("Timer handler initialised\n")
 
 	//Enable timer interrupts and global interrupts. From this point onwards we scramble to get this system under control.
 	asmEnableTimerInterrupts()
