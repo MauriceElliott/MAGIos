@@ -28,7 +28,7 @@ public func KernelMain() -> Never {
     bootMessage()
     setTraps()
 
-    uartPrint("Debugggg")
+    uartPrint("Debugggg\n")
 
     while true {
     }

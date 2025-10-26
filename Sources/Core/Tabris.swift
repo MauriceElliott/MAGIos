@@ -82,29 +82,29 @@ public func trapHandler(_ framePtr: UnsafeMutableRawPointer) {
 	if isInterrupt {
 		switch causeCode {
 			case 5: //Timer interrupt
-				if let handler = CallbackHandlerRegistry().timerHandler {
+				if let handler = handlerRegistry.timerHandler {
 					handler()
 				}
 			case 9: //External interrupt (PLIC)
-				if let handler = CallbackHandlerRegistry().externalHandler {
+				if let handler = handlerRegistry.externalHandler {
 					handler()
 				}
-			default: uartPrint("UnkownInterrupt: \n")
+			default: 
+				uartPrint("[INT:")
+				uartPrint("]\n")
 		}
 	} else {
-		uartPrint("Possible exception thrown\n")
+		uartPrint("[TRAP:Exception]\n")
 	}
 }
 
 let TIMER_INTERVAL = 10000000 //10ms
 
 private func timerInterruptHandler() {
-	uartPrint("debug 5\n")
-	CallbackHandlerRegistry().timerTickCount += 1
+	handlerRegistry.timerTickCount += 1
 
-	uartPrint("debug 6\n")
-	if CallbackHandlerRegistry().timerTickCount % 100 == 0 {
-		uartPrint("tick tock\n")
+	if handlerRegistry.timerTickCount % 100 == 0 {
+		uartPrint("T")  // Single character to reduce output
 	}
 
 	let currentTime = asmGetTime()
@@ -113,18 +113,14 @@ private func timerInterruptHandler() {
 }
 
 private func initTimerHandler() {
-	uartPrint("Initialise Timer Handlers\n")
-
+	uartPrint("initTimer: Registering handler\n")
 	handlerRegistry.timerHandler = timerInterruptHandler
-	uartPrint("debug 1\n")
-
+	uartPrint("initTimer: Getting current time\n")
 	let currentTime = asmGetTime()
-	uartPrint("debug 2\n")
+	uartPrint("initTimer: Setting first interrupt\n")
 	let firstInterrupt = currentTime + TIMER_INTERVAL
-	uartPrint("debug 3\n")
 	asmSetTimer(firstInterrupt)
-	uartPrint("debug 4\n")
-	uartPrint("Timer Handlers Initialized\n")
+	uartPrint("initTimer: Complete\n")
 }
 
 public func setTraps() {
@@ -136,10 +132,10 @@ public func setTraps() {
 
 	//Initialise the Timer Interrupt handler at 10ms (100hz) to make the system a little more manageable.
 	initTimerHandler()
-	uartPrint("Timer handler initialised\n")
+	uartPrint("Timer handlers initialised\n")
 
 	//Enable timer interrupts and global interrupts. From this point onwards we scramble to get this system under control.
+	uartPrint("About to enable interrupts\n")
 	asmEnableTimerInterrupts()
-	uartPrint("Enabled Timer Interrupts\n")
-
+	uartPrint("Returned from enable_timer_interrupts\n")
 }

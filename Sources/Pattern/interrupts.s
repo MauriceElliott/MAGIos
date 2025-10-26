@@ -39,11 +39,13 @@ set_timer:
 .align 4
 trap_vector:
     # Save context to stack (simplified for now)
-    addi sp, sp, -288 # Space for TrapFrame (36 registers × 8 bytes)
+    csrw sscratch, sp     # Temporarily save original SP in sscratch
+    addi sp, sp, -288     # Space for TrapFrame (36 registers × 8 bytes)
 
     # Save all registers to TrapFrame on stack
     sd ra, 0(sp)
-    sd sp, 8(sp) # Note: this saves the pre-trap SP
+    csrr t0, sscratch     # Get original SP from sscratch
+    sd t0, 8(sp)          # Save the ORIGINAL SP value
     sd gp, 16(sp)
     sd tp, 24(sp)
     sd t0, 32(sp)
@@ -125,8 +127,8 @@ trap_vector:
     ld t4, 224(sp)
     ld t5, 232(sp)
     ld t6, 240(sp)
-
-    addi sp, sp, 288 # Restore stack pointer
+    
+    ld sp, 8(sp)      # Restore original stack pointer from saved value
 
     sret # Return from trap
 
