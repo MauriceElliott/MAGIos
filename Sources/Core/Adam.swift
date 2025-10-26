@@ -28,8 +28,6 @@ public func KernelMain() -> Never {
     bootMessage()
     setTraps()
 
-    uartPrint("Debugggg\n")
-
     while true {
     }
 }

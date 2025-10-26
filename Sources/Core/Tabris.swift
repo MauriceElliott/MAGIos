@@ -104,7 +104,7 @@ private func timerInterruptHandler() {
 	handlerRegistry.timerTickCount += 1
 
 	if handlerRegistry.timerTickCount % 100 == 0 {
-		uartPrint("T")  // Single character to reduce output
+		uartPrint("tick tock\n")
 	}
 
 	let currentTime = asmGetTime()
@@ -113,14 +113,10 @@ private func timerInterruptHandler() {
 }
 
 private func initTimerHandler() {
-	uartPrint("initTimer: Registering handler\n")
 	handlerRegistry.timerHandler = timerInterruptHandler
-	uartPrint("initTimer: Getting current time\n")
 	let currentTime = asmGetTime()
-	uartPrint("initTimer: Setting first interrupt\n")
 	let firstInterrupt = currentTime + TIMER_INTERVAL
 	asmSetTimer(firstInterrupt)
-	uartPrint("initTimer: Complete\n")
 }
 
 public func setTraps() {
