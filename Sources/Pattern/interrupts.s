@@ -23,24 +23,22 @@ enable_timer_interrupts:
 
 .globl get_time
 get_time:
-    rdtime a0
+    rdtime a0 # Use a usermode instruction rather than direct memory access.
     ret
 
 .globl set_timer
 set_timer:
     li a7, 0x54494D45 #SBI Timer Extension EID
-    li a6, 0
+    li a6, 0          #Using SBI to set the time here is acceptable.
     ecall
     ret
 
 # Main trap vector - saves context and calls Odin handler
 .align 4
 trap_vector:
-    # Save context to stack (simplified for now)
     csrw sscratch, sp     # Temporarily save original SP in sscratch
     addi sp, sp, -288     # Space for TrapFrame (36 registers × 8 bytes)
 
-    # Save all registers to TrapFrame on stack
     sd ra, 0(sp)
     sd t0, 32(sp)         # Save t0 FIRST before it gets clobbered
     csrr t0, sscratch     # Get original SP from sscratch
@@ -126,8 +124,8 @@ trap_vector:
     ld t5, 232(sp)
     ld t6, 240(sp)
     
-    ld sp, 8(sp)      # Restore original stack pointer from saved value
+    ld sp, 8(sp) # Restore original stack pointer from saved value
 
-    sret # Return from trap
+    sret
 
 .section .note.GNU-stack,"",%progbits

@@ -18,8 +18,6 @@ public func bootMessage() {
     uartPrint("All MAGI Have come online....\n")
     uartPrint("MAGI Sync Initiated....\n")
     uartPrint("\n")
-    uartPrint("Syncronisation Complete, all systems Nominal\n")
-    uartPrint("\n\nGood Morning Professor\n")
 }
 
 @_cdecl("kernel_main")
@@ -27,6 +25,10 @@ public func KernelMain() -> Never {
     
     bootMessage()
     setTraps()
+
+    uartPrint("\nTrap Handler System Engaged...\n")
+
+    uartPrint("\nSyncronisation Complete, all systems Nominal\n")
 
     while true {
     }

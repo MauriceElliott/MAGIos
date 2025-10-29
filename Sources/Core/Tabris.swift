@@ -120,18 +120,12 @@ private func initTimerHandler() {
 }
 
 public func setTraps() {
-	uartPrint("Setting Traps\n")
-
 	//Installing the trap vector which points the CPU to the trap vector assembly.
 	asmSetTrapVector()
-	uartPrint("Trap vector set\n")
 
 	//Initialise the Timer Interrupt handler at 10ms (100hz) to make the system a little more manageable.
 	initTimerHandler()
-	uartPrint("Timer handlers initialised\n")
 
 	//Enable timer interrupts and global interrupts. From this point onwards we scramble to get this system under control.
-	uartPrint("About to enable interrupts\n")
 	asmEnableTimerInterrupts()
-	uartPrint("Returned from enable_timer_interrupts\n")
 }
