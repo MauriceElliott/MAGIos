@@ -44,11 +44,11 @@ trap_vector:
 
     # Save all registers to TrapFrame on stack
     sd ra, 0(sp)
+    sd t0, 32(sp)         # Save t0 FIRST before it gets clobbered
     csrr t0, sscratch     # Get original SP from sscratch
     sd t0, 8(sp)          # Save the ORIGINAL SP value
     sd gp, 16(sp)
     sd tp, 24(sp)
-    sd t0, 32(sp)
     sd t1, 40(sp)
     sd t2, 48(sp)
     sd s0, 56(sp)
