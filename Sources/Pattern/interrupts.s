@@ -23,16 +23,14 @@ enable_timer_interrupts:
 
 .globl get_time
 get_time:
-    # Read current time from CLINT
-    li t0, 0x0200BFF8 # CLINT_MTIME
-    ld a0, 0(t0)
+    rdtime a0
     ret
 
 .globl set_timer
 set_timer:
-    # Set timer compare value
-    li t0, 0x02004000 # CLINT_MTIMECMP
-    sd a0, 0(t0)
+    li a7, 0x54494D45 #SBI Timer Extension EID
+    li a6, 0
+    ecall
     ret
 
 # Main trap vector - saves context and calls Odin handler
